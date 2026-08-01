@@ -704,71 +704,127 @@ button:disabled {
   width: auto;
 }
 
-/* Quick actions container (hidden on desktop, visible on mobile header) */
-.menu-quick-actions {
-  display: none;
+/* Base Desktop Styles */
+.menu {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 20px;
+  background-color: #111;
+  position: sticky;
+  top: 0;
+  z-index: 1000;
 }
 
+.menu-brand {
+  display: flex;
+  align-items: center;
+}
+
+.brand-logo-img {
+  height: 40px;
+}
+
+.menu-quick-actions {
+  display: flex;
+  gap: 10px;
+}
+
+.quick-btn {
+  text-align: center;
+  font-size: 0.9rem;
+  padding: 6px 10px;
+  background: rgba(212, 175, 55, 0.15);
+  color: var(--gold-primary, #d4af37);
+  border: 1px solid rgba(212, 175, 55, 0.3);
+  border-radius: 4px;
+  text-decoration: none;
+  font-weight: 600;
+  line-height: 1.2;
+}
+
+.menu-links {
+  display: flex;
+  gap: 15px;
+  align-items: center;
+}
+
+.menu-links a, .menu-quick-actions a {
+  color: #fff;
+  text-decoration: none;
+}
+
+.menu-right {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+/* Hide mobile toggle on desktop */
 .menu-toggle {
   display: none;
-  background: none;
-  border: none;
-  cursor: pointer;
-  flex-direction: column;
-  justify-content: space-between;
-  height: 20px;
-  width: 25px;
-  padding: 0;
 }
 
-.menu-toggle .bar {
-  display: block;
-  height: 3px;
-  width: 100%;
-  background-color: var(--gold-primary, #d4af37);
-  border-radius: 2px;
-}
-
-/* Responsive Media Query for Mobile Phones */
+/* Responsive Media Query for Mobile Phones (max-width: 768px) */
 @media screen and (max-width: 768px) {
   .menu {
     flex-wrap: wrap;
-    justify-content: space-between;
-    padding: 10px 12px;
+    padding: 8px 10px;
   }
 
   .menu-brand {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    width: 100%;
+    flex: 0 0 auto;
   }
 
-  /* Show quick buttons on mobile header next to the brand */
+  .brand-logo-img {
+    height: 32px;
+  }
+
+  /* Keep Trivia & Leaderboard stacked nicely outside */
   .menu-quick-actions {
     display: flex;
-    gap: 8px;
-    align-items: center;
-    margin-left: auto;
-    margin-right: 12px;
+    gap: 6px;
+    margin-left: 8px;
   }
 
   .quick-btn {
-    font-size: 0.8rem;
-    padding: 5px 8px;
-    background: rgba(212, 175, 55, 0.15);
-    color: var(--gold-primary, #d4af37);
-    border: 1px solid rgba(212, 175, 55, 0.3);
-    border-radius: 4px;
-    text-decoration: none;
-    font-weight: 600;
+    font-size: 0.7rem;
+    padding: 4px 6px;
   }
 
+  /* Push login/logout and user details tightly into the top row to prevent dropping */
+  .menu-right {
+    margin-left: auto;
+  }
+
+  .btn-login-nav {
+    padding: 4px 10px;
+    font-size: 0.8rem;
+  }
+
+  /* Hamburger Toggle Button Style */
   .menu-toggle {
     display: flex;
+    background: none;
+    border: none;
+    cursor: pointer;
+    flex-direction: column;
+    justify-content: space-between;
+    height: 18px;
+    width: 22px;
+    padding: 0;
+    margin-left: 8px;
   }
 
-  /* Collapsible menu links */
+  .menu-toggle .bar {
+    display: block;
+    height: 2px;
+    width: 100%;
+    background-color: var(--gold-primary, #d4af37);
+    border-radius: 2px;
+  }
+
+  /* Collapsible Menu Links Dropdown */
   .menu-links {
     display: none;
     flex-direction: column;
@@ -777,6 +833,7 @@ button:disabled {
     border-top: 1px solid rgba(212, 175, 55, 0.2);
     padding: 5px 0;
     text-align: center;
+    order: 4; /* Forces it to drop below everything else when expanded */
   }
 
   .menu-links.mobile-active {
@@ -787,13 +844,6 @@ button:disabled {
     padding: 10px 0;
     width: 100%;
     border-bottom: 1px solid rgba(255, 255, 255, 0.05);
-  }
-
-  .menu-right {
-    width: 100%;
-    display: flex;
-    justify-content: center;
-    margin-top: 8px;
   }
 }
 

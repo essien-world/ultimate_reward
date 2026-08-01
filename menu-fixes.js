@@ -176,12 +176,13 @@ if (document.readyState === 'loading') {
   setupMenuHandlers();
 }
 
-// Mobile Hamburger Menu Toggle
+// Mobile Hamburger Menu Toggle Fix
   const mobileToggle = $('mobileMenuToggle');
   const menuLinksContainer = $('menuLinksContainer');
   
   if (mobileToggle && menuLinksContainer) {
-    mobileToggle.addEventListener('click', () => {
+    mobileToggle.addEventListener('click', (e) => {
+      e.stopPropagation();
       menuLinksContainer.classList.toggle('mobile-active');
     });
 
