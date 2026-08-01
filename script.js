@@ -1681,7 +1681,3 @@ if (typeof window !== "undefined") {
   window.checkReferrerPoints = checkReferrerPoints;
 }
 
-const resJson = (typeof window.submitCommentViaBackend === "function")
-  ? await window.submitCommentViaBackend(payload)
-  : (typeof window.submitComment === "function" ? await window.submitComment(payload) : { success: false, message: "No backend available" });
-

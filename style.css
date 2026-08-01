@@ -75,12 +75,15 @@ h1, h2, h3 {
 }
 
 .menu-links {
-  display: none; 
+  display: flex;
+  gap: 16px;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: center;
 }
 
 @media (min-width: 768px) {
   .menu-links {
-    display: flex;
     gap: 20px;
   }
   .menu-links a {
@@ -98,12 +101,12 @@ h1, h2, h3 {
 /* Hero Section */
 .hero-banner {
   position: relative;
-  min-height: 250px; 
+  min-height: 70px;
   display: flex;
   align-items: center;
   justify-content: center;
   text-align: center;
-  padding: 80px 20px 40px;
+  padding: 20px 12px 16px;
   background: var(--bg-black);
   overflow: hidden;
 }
