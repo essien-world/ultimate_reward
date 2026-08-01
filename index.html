@@ -1,0 +1,403 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <script type="module" src="firebase.js"></script>
+  <script type="module" src="questions.js"></script>
+  <script type="module" src="nigeria-data.js"></script>
+  <script type="module" src="FAQ.js"></script>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>Gulder - The Ultimate Returns</title>
+  
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Cinzel:wght@600;700;900&family=Montserrat:wght@400;600;800&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+  <!-- Sticky Navigation Bar -->
+  <nav class="menu" role="navigation">
+    <div class="menu-brand">
+      <img src="https://github.com/user-attachments/assets/5c969afb-f8b6-4e04-adfa-91af72c53c58" alt="Drink Logo" class="brand-logo-img" />
+    </div>
+    <div class="menu-links">
+      <a href="#heroSection" id="menuHome">Home</a>
+      <a href="#gameSection" id="menuGame">Trivia Game</a>
+      <a href="#" id="menuLeaderboard">Online Leaderboard</a>
+      <a href="#" id="menuFAQ">FAQ</a>
+      <a href="#" id="menuSupportBtn" class="hidden">Support</a>
+    </div>
+    
+    <!-- Updated User Info & Auth Buttons Area -->
+    <div class="menu-right" id="menuUserInfo">
+      <div id="navUserDetails" class="nav-user-details hidden">
+        <span id="navUserName" class="nav-user-name"></span>
+        <span id="navUserPhone" class="nav-user-phone"></span>
+      </div>
+      <button id="navLoginBtn" class="btn btn-login-nav">Login</button>
+      <button id="navLogoutBtn" class="btn btn-login-nav hidden">Logout</button>
+    </div>
+  </nav>
+
+  <!-- Banner -->
+  <div class="first-banner" style="margin-top: 64px; text-align: center; background: #000;">
+    <img src="https://github.com/user-attachments/assets/50e9990b-9ab4-40b7-9e98-87685ca462bb" alt="Top Banner" style="width: 100%; height: auto; display: block;" />
+  </div>
+
+  <!-- Hero Section -->
+  <header id="heroSection" class="hero-banner">
+    <img src="https://github.com/user-attachments/assets/ce229f75-0770-49d9-91c5-03aa377262a6" alt="Second Banner" class="hero-banner-img" />
+    <div class="hero-overlay"></div>
+    <div class="hero-content">
+      <h2 class="hero-subtext">THE ULTIMATE RETURNS</h2>
+      <h1 class="hero-title">DO YOU HAVE WHAT IT TAKES?</h1>
+      <h2 class="hero-subtext" style="color: #ff3333; font-size: 1.5rem; margin-bottom: 15px;">DON’T LOOK BACK!!!</h2>
+      <p class="hero-desc">Sound the trumpet, play the trivia game, accumulate your energy points, and climb the ultimate ladder</p>
+      
+      <div class="marquee-wrapper">
+        <div class="marquee-label">Top Winners</div>
+        <div class="marquee-container box-like-register">
+          <div class="marquee-content">
+            <span>🏆 John D. - Highest Visitors (N20,000)</span>
+            <span>🏆 Sarah G. - (Laptop)</span>
+            <span>🏆 Mike T. - (Phone)</span>
+            <span>🏆 Grace O. - (N5m Monthly Winner)</span>
+            <span>🏆 Emmanuel A. - (SUV Car)</span>
+          </div>
+        </div>
+      </div>
+
+      <a href="#authSection" id="heroCta" class="btn btn-register hero-btn">REGISTER NOW</a>
+
+      <div class="important-notice" style="margin-top:14px; padding:12px; border-radius:8px; background: rgba(212,175,55,0.06); border:1px solid rgba(212,175,55,0.06); color:var(--text-muted); font-size:0.9rem; text-align:left; max-width:720px;">
+        <strong>Important Notice:</strong> Reaching 10,000 points does not guarantee immediate reward payment. Every qualifying account undergoes a verification process. All your referred phone numbers will be verified via SMS OTP to confirm they belong to genuine individuals. Rewards are released only after successful verification and compliance with the platform's rules. This policy helps maintain fairness and prevent fraudulent referrals.
+      </div>
+
+    </div>
+  </header>
+
+  <main class="container" id="mainContent">
+    
+    <!-- Auth Section -->
+    <section id="authSection" class="card auth-card">
+      <div class="auth-tabs">
+        <button id="tabRegister" class="auth-tab active">Register</button>
+        <button id="tabLogin" class="auth-tab">Login</button>
+      </div>
+
+      <!-- Registration Form -->
+      <form id="registerForm" class="auth-form" autocomplete="off">
+        <h2>Join The Search</h2>
+        <label><strong>Full Name</strong>
+          <input type="text" id="name" placeholder="John Doe" required />
+        </label>
+        <label><strong>Phone Number (Strict Prefix Required)</strong>
+          <input type="tel" id="phone" placeholder="234703XXXXXXX" pattern="^(234703|234704|234706|234803|234806|234810|234813|234814|234816|234903|234906|234913|234916|234705|234805|234807|234811|234815|234905|234915|234701|234708|234802|234808|234812|234901|234902|234904|234907|234911|234912|234809|234817|234818|234908|234909|2347020|234804|234709|234819)[0-9]{7}$" maxlength="14" required />
+        </label>
+        <label><strong>Password</strong>
+          <input type="password" id="regPassword" placeholder="Enter Password" required />
+        </label>
+        <label><strong>Confirm Password</strong>
+          <input type="password" id="regConfirmPassword" placeholder="Confirm Password" required />
+        </label>
+        <label id="stateLabel"><strong>State</strong>
+          <select id="stateSelect" required><option value="">Select state</option></select>
+        </label>
+        <label id="lgaLabel"><strong>LGA</strong>
+          <select id="lgaSelect" required><option value="">Select LGA</option></select>
+        </label>
+        <button type="submit" id="registerBtn" class="btn btn-register">Register Now</button>
+      </form>
+
+      <!-- Login Form -->
+      <form id="loginForm" class="auth-form hidden" autocomplete="off">
+        <h2>Member Login</h2>
+        <label><strong>Phone Number</strong>
+          <input type="tel" id="loginPhone" placeholder="234703XXXXXXX" required />
+        </label>
+        <label><strong>Password</strong>
+          <input type="password" id="loginPasswordInput" placeholder="Enter Password" required />
+        </label>
+        <button type="submit" class="btn btn-register">Login</button>
+      </form>
+    </section>
+
+    <!-- Dashboard -->
+    <section id="dashboardSection" class="card dashboard-card hidden">
+      <div class="dash-header">
+        <div class="dash-welcome">
+          <span class="welcome-label">WELCOME</span>
+          <h3 id="dashUserName">John Doe</h3>
+          <p id="dashUserPhone" class="dash-phone">2348012345678</p>
+          <div id="dashRedeemCodeDisplay" style="color: #d4af37; font-weight: bold; margin-top: 6px; font-size: 1.05rem;"></div>
+          <!-- Bank display area (top of dashboard) -->
+          <div id="bankDisplayInfo" class="bank-display-info hidden" style="margin-top:10px;">
+            <p style="margin:2px 0;"><strong>Bank:</strong> <span id="bankDisplayName"></span></p>
+            <p style="margin:2px 0;"><strong>Account Name:</strong> <span id="bankDisplayAccount"></span></p>
+            <p style="margin:2px 0;"><strong>Account Number:</strong> <span id="bankDisplayNumber"></span></p>
+          </div>
+        </div>
+        <div class="dash-ref-box">
+          <span class="ref-label">REFERRAL CODE</span>
+          <div class="ref-code-display" id="dashRefCode">GULD0000</div>
+        </div>
+      </div>
+      
+      <!-- Bank Details Box (locked until 10,000 points) -->
+      <div id="bankDetailsBox" class="account-details-box" style="margin-bottom:12px;">
+        <div style="display:flex; justify-content:space-between; align-items:center;">
+          <div>
+            <span class="ref-label">BANK DETAILS</span>
+            <div style="font-size:0.95rem; color:#ddd; margin-top:6px;">Add your bank information to receive rewards</div>
+          </div>
+          <div style="text-align:right;">
+            <div id="bankLockIcon" style="font-size:1.5rem; color:#ffbb33;">🔒</div>
+            <div id="bankStatusText" style="font-size:0.8rem; color:#ccc; margin-top:6px;">Locked (Requires 10,000 points)</div>
+          </div>
+        </div>
+
+        <!-- Bank Form (hidden until unlocked or after saved) -->
+        <div id="bankFormContainer" style="margin-top:12px; display:none;">
+          <label><strong>Bank Name</strong>
+            <input type="text" id="bankNameInput" placeholder="e.g. First Bank" />
+          </label>
+          <label><strong>Account Name</strong>
+            <input type="text" id="accountNameInput" placeholder="Full name on account" />
+          </label>
+          <label><strong>Account Number</strong>
+            <input type="text" id="accountNumberInput" placeholder="0123456789" />
+          </label>
+          <button id="submitBankBtn" class="btn btn-register" style="margin-top:10px;">Submit Bank Details</button>
+        </div>
+      </div>
+
+      <!-- PHONE NUMBER VERIFICATION BOX (locked until 10,000 points) -->
+      <div id="phoneVerificationBox" class="account-details-box" style="margin-bottom:12px;">
+        <div style="display:flex; justify-content:space-between; align-items:center;">
+          <div>
+            <span class="ref-label">PHONE NUMBER VERIFICATION</span>
+            <div style="font-size:0.95rem; color:#ddd; margin-top:6px;">Verify your phone with an OTP to receive verified status</div>
+          </div>
+          <div style="text-align:right;">
+            <div id="phoneVerifyLockIcon" style="font-size:1.5rem; color:#ffbb33;">🔒</div>
+            <div id="phoneVerifyStatusText" style="font-size:0.8rem; color:#ccc; margin-top:6px;">Locked (Requires 10,000 points)</div>
+          </div>
+        </div>
+
+        <div id="phoneVerifyForm" style="margin-top:12px; display:none;">
+          <div style="display:flex; gap:8px; align-items:center;">
+            <div style="flex:1;">
+              <button id="sendOtpBtn" class="btn btn-dark" style="padding:10px;">Send OTP</button>
+            </div>
+          </div>
+
+          <label style="margin-top:10px;"><strong>Enter OTP</strong>
+            <input type="text" id="otpInput" placeholder="Enter OTP" />
+          </label>
+          <div style="display:flex; gap:8px; margin-top:8px;">
+            <button id="verifyOtpBtn" class="btn btn-register" style="width:160px;">Verify</button>
+            <div id="phoneVerifyMsg" style="align-self:center; color:var(--gold-primary); font-weight:700;"></div>
+          </div>
+        </div>
+      </div>
+      
+      <div class="dash-stats-grid">
+        <div class="stat-box">
+          <span class="stat-num" id="dashVisitors">0</span>
+          <span class="stat-title">Valid Referrals</span>
+        </div>
+        <div class="stat-box">
+          <span class="stat-num" id="dashPoints">0</span>
+          <span class="stat-title">Point Box</span>
+        </div>
+        <div class="stat-box">
+          <span class="stat-num" id="dashGameScore">0</span>
+          <span class="stat-title">Game Box</span>
+        </div>
+        <div style="margin-top:8px; display:flex; gap:8px; align-items:center;">
+  <button id="mandatoryVerifyBtn" class="btn btn-dark" style="width:140px; font-size:0.85rem; padding:8px 10px;">
+    <span id="mandLockIcon" style="margin-right:6px;">🔒</span> Mandatory verification
+  </button>
+  <!-- optional small helper text -->
+  <div style="font-size:0.85rem; color:var(--text-muted);">Unlocks when your referrer has 10,000+ points</div>
+</div>
+      </div>
+    </section>
+
+    <!-- Sharing & Code Redemption -->
+    <section id="taskSection" class="card task-card">
+      <h2 class="section-title">BLOW THE TRUMPET</h2>
+      <p class="subtext">Share on WhatsApp GULDER times to unlock your 600-point redemption code!</p>
+
+      <div class="journey-container">
+        <!-- Step 1: Energy Level -->
+        <div class="journey-step">
+          <div class="step-header">
+            <span class="step-badge">STEP 1</span>
+            <h3>🔥 ENERGY LEVEL</h3>
+            <span id="percentDisplay" class="percent-tag">GULDER</span>
+          </div>
+          <div class="energy-meter-container" style="background:#222; height:20px; border-radius:10px; overflow:hidden;">
+            <div id="energyFill" class="energy-fill" style="width:0%; background:linear-gradient(90deg, #ff0000, #ffcc00); height:100%;"></div>
+          </div>
+        </div>
+
+        <!-- Step 2: WhatsApp Share -->
+        <div class="journey-step">
+          <div class="step-header">
+            <span class="step-badge">STEP 2</span>
+            <h3>SHARE TO BUILD ENERGY</h3>
+          </div>
+          <button id="whatsappShare" class="btn action-btn" style="background:#25D366; color:white; width:100%; font-size:1.1rem; padding:12px;">
+           SHARE ON WHATSAPP (<span id="sharePercent">0%</span>)
+          </button>
+        </div>
+
+        <!-- Step 3: Redeem Code -->
+        <div class="journey-step">
+          <div class="step-header">
+            <span class="step-badge">STEP 3</span>
+            <h3>YOUR REDEMPTION REWARD</h3>
+          </div>
+          <div class="claim-box">
+            <button id="redeemBtn" class="btn btn-claim locked action-btn" disabled style="width:100%;">
+              <span id="lockIcon">🔒</span> <span id="claimBtnText">Redeem Reward</span>
+            </button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- GAME SECTION -->
+    <section id="gameSection" class="card task-card">
+      <h2 class="section-title">THE ULTIMATE TRIVIA</h2>
+      <p class="subtext">Complete redemption to unlock! Answer 15 questions across 3 units (100 points per correct answer).</p>
+      
+      <!-- Category Unit Buttons -->
+      <div id="gameMenu" class="game-categories" style="display:flex; flex-direction:column; gap:10px;">
+        <button id="btnGulderGame" class="btn btn-dark" style="padding:15px;">
+          GULDER UNIT (5 Questions) <span id="statusGulder">⚪</span>
+        </button>
+        <button id="btnGeneralGame" class="btn btn-dark" style="padding:15px;">
+          GENERAL UNIT (5 Questions) <span id="statusGeneral">⚪</span>
+        </button>
+        <button id="btnSportsGame" class="btn btn-dark" style="padding:15px;">
+          SPORTS UNIT (5 Questions) <span id="statusSports">⚪</span>
+        </button>
+      </div>
+
+      <!-- Play Area -->
+      <div id="gamePlayArea" class="hidden" style="background:#111; padding:20px; border-radius:10px; margin-top:15px; border:1px solid #333;">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
+          <h3 id="gameCategoryTitle" style="color:#d4af37; margin:0;"></h3>
+          <div style="font-weight:bold; color:#ff3333; font-size:1.2rem;">⏳ <span id="gameTimer">20</span>s</div>
+        </div>
+        <p id="gameQuestionText" style="font-size:1.1rem; margin-bottom:15px; min-height:50px;"></p>
+        <div id="gameOptionsContainer" style="display:flex; flex-direction:column; gap:10px;"></div>
+      </div>
+
+      <!-- Completion & Action Controls -->
+      <div id="gamePostArea" class="hidden" style="margin-top:20px; padding-top:20px; border-top:1px solid #333; text-align:center;">
+        <button id="btnInitialSubmitGame" class="btn btn-claim" style="width:100%; margin-bottom:15px;">Submit Answers</button>
+
+        <!-- Results Reveal Box -->
+        <div id="gameResultsReveal" class="hidden" style="background:#222; padding:15px; border-radius:8px; margin-bottom:15px;">
+          <h3 style="color:#d4af37; margin-bottom:10px;">Round Results</h3>
+          <p id="gameScoreText" style="font-size:1.2rem; font-weight:bold;"></p>
+          <div id="answersBreakdown" style="max-height:200px; overflow-y:auto; text-align:left; font-size:0.9rem; background:#000; padding:10px; border-radius:5px; margin-top:10px;"></div>
+        </div>
+
+        <!-- Post-Reveal Choice Buttons -->
+        <div id="postRevealButtons" class="hidden" style="display:flex; flex-direction:column; gap:10px;">
+          <button id="btnWatchAdGame" class="btn" style="background:#004085; color:white; padding:12px;">Watch sponsor ads to play again for today</button>
+          <button id="btnFinalSubmitGame" class="btn btn-claim" style="padding:12px;">Submit Final Points to Dashboard</button>
+        </div>
+      </div>
+      
+      <!-- Replay Persistent Ad Button Container -->
+      <div id="persistentAdContainer" class="hidden" style="margin-top:15px;">
+        <button id="btnPersistentAdGame" class="btn" style="background:#004085; color:white; width:100%; padding:12px;">Watch sponsor ads to play again for today</button>
+      </div>
+    </section>
+
+    <!-- Online Leaderboard Modal -->
+    <div id="onlineLeaderboardModal" class="modal hidden">
+      <div class="modal-content" style="background:#141414; padding:18px; border-radius:10px; max-height:70vh; overflow:hidden;">
+        <h3 style="color:#d4af37; margin-bottom:8px;">Online Leaderboard — Top 50</h3>
+        <p style="color:var(--text-muted); font-size:0.85rem; margin-bottom:10px;">Live ranking (name — referral — points)</p>
+        <div id="onlineLeaderboardList" style="max-height:52vh; overflow:auto; background:#0b0b0b; border-radius:8px; padding:8px; border:1px solid rgba(212,175,55,0.05);">
+          <div id="onlineLeaderboardLoading" style="color:var(--text-muted); padding:12px; text-align:center;">Loading leaderboard...</div>
+        </div>
+        <div style="margin-top:12px; display:flex; gap:8px;">
+          <button id="closeLeaderboardBtn" class="btn btn-dark" style="flex:1;">Close</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- FAQ Modal (collapsible) -->
+    <div id="faqModal" class="modal hidden" aria-hidden="true">
+      <div class="modal-content" style="max-width:640px;">
+        <h3 style="color:var(--gold-primary); margin-bottom:8px;">Frequently Asked Questions</h3>
+        <div id="faqList" style="text-align:left; margin-top:8px;"> <div style="color:var(--text-muted); padding:12px;">Loading FAQ...</div> </div>
+        <div style="margin-top:12px;">
+          <button id="closeFaqBtn" class="btn btn-dark" style="width:100%;">Close</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Support Modal -->
+    <div id="supportModal" class="modal hidden" aria-hidden="true">
+      <div class="modal-content" style="max-width:640px;">
+        <h3 style="color:var(--gold-primary); margin-bottom:8px;">Support</h3>
+        <p style="color:var(--text-muted); font-size:0.95rem; margin-bottom:12px;">Write your message and submit. We'll save it to the support spreadsheet.</p>
+        <label style="display:block; margin-bottom:8px;">
+          <strong>Your message</strong>
+          <textarea id="supportMessageInput" rows="5" style="width:100%; margin-top:8px; padding:10px; border-radius:8px; background:rgba(0,0,0,0.45); color:var(--text-white);"></textarea>
+        </label>
+        <div style="display:flex; gap:8px;">
+          <button id="submitSupportBtn" class="btn btn-register" style="flex:1;">Submit</button>
+          <button id="closeSupportBtn" class="btn btn-dark">Close</button>
+        </div>
+        <div id="supportStatusMsg" style="margin-top:10px; font-weight:700; color:var(--gold-primary);"></div>
+      </div>
+    </div>
+
+    <!-- Comments Section -->
+    <section id="commentSection" class="card comment-card">
+      <h2 class="section-title">PLAYER VOICES</h2>
+      <p class="subtext">What players are saying about the game and their wins — rotating comments (5 shown at a time).</p>
+
+      <div id="commentsDisplayList" class="comments-feed" style="margin-top:12px; margin-bottom:14px;"></div>
+
+      <div style="margin-top:12px;">
+        <label style="display:block; margin-bottom:8px; color:var(--text-muted); font-weight:700;">Write your comment (registered users only)</label>
+        <textarea id="commentTextarea" placeholder="Share your experience..." rows="3" style="width:100%; padding:10px; border-radius:8px; background:rgba(0,0,0,0.45); color:var(--text-white); border:1px solid rgba(255,255,255,0.04);"></textarea>
+        <div style="display:flex; gap:10px; margin-top:8px;">
+          <button id="commentSubmitBtn" class="btn btn-register" style="width:160px;">Comment</button>
+          <div id="commentStatusMsg" style="align-self:center; color:var(--gold-primary); font-weight:700;"></div>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- Redeem Modal -->
+  <div id="redeemModal" class="modal hidden">
+    <div class="modal-content" style="background:#1a1a1a; padding:25px; border-radius:10px; text-align:center;">
+      <h3 style="color:#d4af37;">🎉 REWARD UNLOCKED!</h3>
+      <p>Your unique redemption code:</p>
+      <div class="code-box" style="margin:15px 0;">
+        <input id="redeemCodeInput" readonly style="color: #000; font-weight: bold; font-size:1.2rem; text-align:center; padding:8px;" />
+      </div>
+      <button id="closeModalBtn" class="btn btn-dark">Close & Claim 600 Points</button>
+    </div>
+  </div>
+
+  <!-- Comments script (keeps comments functionality) -->
+  <script type="module" src="comments.js"></script>
+
+  <script type="module" src="script.js"></script>
+</body>
+</html>
