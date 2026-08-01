@@ -411,3 +411,6 @@ const SPORTS_QUESTIONS = [
   { q: "Who captained Liverpool during the famous \"Miracle of Istanbul\" comeback in the 2005 UEFA Champions League Final?", options: ["Jamie Carragher", "Steven Gerrard", "Sami Hyypiä", "Xabi Alonso"], answer: 1 },
   { q: "Which country became the first African nation to reach the FIFA World Cup semi-finals?", options: ["Cameroon", "Ghana", "Nigeria", "Morocco"], answer: 3 }
 ];
+
+// expose for legacy scripts
+if (typeof window !== "undefined") window.GULDER_QUESTIONS = GULDER_QUESTIONS;
