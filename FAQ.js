@@ -146,3 +146,6 @@ const FAQS = [
       "Please ensure your bank details are accurate before submitting them. Incorrect information may delay or prevent successful reward payment."
   }
 ];
+
+// expose for legacy scripts
+if (typeof window !== "undefined") window.FAQS = FAQS;
