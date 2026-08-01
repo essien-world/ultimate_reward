@@ -1,6 +1,5 @@
-// script.js - Complete (includes new FAQ, Support, Phone Verification, online checks)
-// IMPORTANT: Set SCRIPT_URL to your deployed Apps Script web app URL (do NOT leave as placeholder)
-const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwe4K4n8NFWG1sg_nB3hAKo4B9YlSlREvU0mQKkw-EE_fC29LAebd7Au0_Up236IKcA/exec";
+
+const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxY6ViaBZ8xdkN7-wgvtRzHvE0rkg06dOBhjghWJp5nCaFSgJPUyWPoGhgOZiVkbogz/exec";
 const SPONSOR_URL = "https://google.com";
 
 // TODO: Replace with your real OTP endpoints
