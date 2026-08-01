@@ -147,5 +147,7 @@ const FAQS = [
   }
 ];
 
+
 // expose for legacy scripts
 if (typeof window !== "undefined") window.FAQS = FAQS;
+export { FAQS };
