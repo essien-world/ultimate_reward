@@ -1,4 +1,4 @@
-// script.js (partial — changes shown)
+// script.js (fixed, ready-to-use)
 import {
   registerUser,
   lookupPhone,
@@ -18,7 +18,12 @@ const SPONSOR_URL = "https://google.com";
 const OTP_SEND_URL = "https://example.com/send-otp";
 const OTP_VERIFY_URL = "https://example.com/verify-otp";
 
-let currentUser = null;
+let currentUser = null; // module-scoped user
+function setCurrentUser(user) {
+  currentUser = user;
+  try { window.currentUser = user; } catch (e) { /* ignore */ }
+}
+
 let shareCount = 0;
 let isRedeemed = false;
 
@@ -41,6 +46,7 @@ const AD_REQUIRED_SECONDS = 7;
 const BANK_UNLOCK_POINTS = 10000;
 const REF_WORD = "GULDER";
 
+// Make apiCall visible early (we attach window.apiCall at the bottom after the function definition)
 // DOM ready
 document.addEventListener("DOMContentLoaded", () => {
   setupOnlineOfflineHandlers();
@@ -99,10 +105,8 @@ function ensureOnline() {
    UI Helpers & Small Integrations
    -------------------- */
 function injectImportantNotice() {
-  // Add Important Notice below the REGISTER NOW button in the hero
   const heroCta = document.getElementById("heroCta");
   if (!heroCta) return;
-  // Avoid duplicate insertion
   if (document.getElementById("importantNoticeBox")) return;
 
   const notice = document.createElement("div");
@@ -119,19 +123,16 @@ function injectImportantNotice() {
 }
 
 function removeClutterMenuItems() {
-  // Hide My Reward (menuReward) and the comment shortcut (menuFAQ may be reused for FAQ)
   ["menuReward"].forEach(id => {
     const el = document.getElementById(id);
     if (el) el.style.display = "none";
   });
-  // If there's an old comment anchor with id menuComment, hide it (defensive)
   const oldComment = document.getElementById("menuComment");
   if (oldComment) oldComment.style.display = "none";
 }
 
 /* --------------------
    FAQ Modal (collapsible)
-   Requires FAQ.js which defines FAQS = [ {question, answer}, ... ]
    -------------------- */
 function setupMenuFAQHandler() {
   const faqLink = document.getElementById("menuFAQ");
@@ -139,7 +140,6 @@ function setupMenuFAQHandler() {
   faqLink.addEventListener("click", (e) => {
     e.preventDefault();
     const modal = document.getElementById("faqModal");
-    // Toggle: if modal exists and is visible, hide it
     if (modal && !modal.classList.contains("hidden")) {
       modal.classList.add("hidden");
       return;
@@ -149,13 +149,11 @@ function setupMenuFAQHandler() {
 }
 
 function openFaqModal() {
-  // Ensure FAQS exists
   if (typeof FAQS === "undefined") {
     alert("FAQ content is not available.");
     return;
   }
 
-  // create modal if not present
   let modal = document.getElementById("faqModal");
   if (!modal) {
     modal = document.createElement("div");
@@ -177,7 +175,6 @@ function openFaqModal() {
     document.body.appendChild(modal);
   }
 
-  // populate list - support both faqList (preferred) and faqContainer (legacy)
   const list = document.getElementById("faqList") || document.getElementById("faqContainer");
   if (!list) {
     console.warn("No FAQ container (faqList or faqContainer) found.");
@@ -215,7 +212,6 @@ function openFaqModal() {
     list.appendChild(row);
   });
 
-  // Ensure the Close button always closes the modal (attach once)
   const closeBtn = (modal || document).querySelector("#closeFaqBtn");
   if (closeBtn && !closeBtn._faqListenerAdded) {
     closeBtn.addEventListener("click", () => {
@@ -229,21 +225,19 @@ function openFaqModal() {
 }
 
 /* --------------------
-   Support Menu (visible to logged-in users)
+   Support Menu
    -------------------- */
 function setupSupportMenu() {
-  // add support button to menu-links if it doesn't exist
   const menuLinks = document.querySelector(".menu-links");
   if (!menuLinks) return;
 
-  // support link may exist in markup under id menuSupportBtn or menuSupport
   let supportLink = document.getElementById("menuSupport") || document.getElementById("menuSupportBtn");
   if (!supportLink) {
     supportLink = document.createElement("a");
     supportLink.href = "#";
     supportLink.id = "menuSupport";
     supportLink.textContent = "Support";
-    supportLink.style.display = "none"; // only show when logged in
+    supportLink.style.display = "none";
     menuLinks.appendChild(supportLink);
   }
 
@@ -256,7 +250,6 @@ function setupSupportMenu() {
     openSupportModal();
   });
 
-  // Attach listeners to the existing modal buttons if markup already exists in the page
   const submitBtn = document.getElementById("submitSupportBtn");
   if (submitBtn && !submitBtn._supportListenerAdded) {
     submitBtn.addEventListener("click", submitSupportMessage);
@@ -303,7 +296,6 @@ function openSupportModal() {
     document.getElementById("submitSupportBtn").addEventListener("click", submitSupportMessage);
   }
 
-  // Ensure handlers present even if modal existed in DOM already
   const submit = document.getElementById("submitSupportBtn");
   if (submit && !submit._supportListenerAdded) {
     submit.addEventListener("click", submitSupportMessage);
@@ -344,8 +336,6 @@ async function submitSupportMessage() {
   btn.textContent = "Submitting...";
 
   try {
-    // Re-using submitComment endpoint to collect support messages into Comments sheet.
-    // If you add a dedicated endpoint on backend, change action to that endpoint name.
     const res = await apiCall({
       action: "submitComment",
       phone: currentUser.phone,
@@ -356,7 +346,6 @@ async function submitSupportMessage() {
     if (res && res.success) {
       msgDiv.textContent = "Support message submitted. We'll get back to you.";
       input.value = "";
-      // Close modal after successful submit (small delay for user to see message)
       setTimeout(() => {
         const modal = document.getElementById("supportModal");
         if (modal) modal.classList.add("hidden");
@@ -394,7 +383,6 @@ function setupPhoneVerificationUI() {
         alert("Please login first!");
         return;
       }
-      // Send OTP via external OTP sender
       sendBtn.disabled = true;
       sendBtn.textContent = "Sending...";
       try {
@@ -446,14 +434,18 @@ function setupPhoneVerificationUI() {
         const json = await res.json().catch(() => ({ success: false, message: "Invalid response" }));
 
         if (json && json.success && json.matched) {
-          // mark verified in backend
           const backend = await apiCall({ action: "setPhoneVerified", phone: currentUser.phone, verified: true });
           if (backend && backend.success) {
-            statusMsg.textContent = "Phone verified ✓";
-            statusMsg.style.color = "#25D366";
+            const statusMsgEl = document.getElementById("phoneVerifyMsg");
+            if (statusMsgEl) {
+              statusMsgEl.textContent = "Phone verified ✓";
+              statusMsgEl.style.color = "#25D366";
+            }
             if (document.getElementById("phoneVerifyLockIcon")) document.getElementById("phoneVerifyLockIcon").textContent = "✅";
-            // update local UI and user object
-            currentUser.phoneVerified = true;
+            if (currentUser) {
+              currentUser.phoneVerified = true;
+              setCurrentUser(currentUser);
+            }
             alert("Phone number verified successfully.");
             otpInput.value = "";
             await refreshUserData();
@@ -475,7 +467,6 @@ function setupPhoneVerificationUI() {
     });
   }
 
-  // initial locked state - will be toggled by refreshUserData()
   togglePhoneVerification(false, false);
 }
 
@@ -503,7 +494,6 @@ function togglePhoneVerification(unlocked, phoneIsVerified) {
 
 /* --------------------
    Leaderboard, Bank and other existing functions
-   Preserved from original implementation (unchanged behavior)
    -------------------- */
 function setupOnlineLeaderboard() {
   const leaderboardLink = document.getElementById("menuLeaderboard");
@@ -546,7 +536,6 @@ async function openOnlineLeaderboard() {
       return;
     }
 
-    // build header
     let html = `<div style="display:flex; gap:8px; padding:8px; border-bottom:1px solid rgba(255,255,255,0.03); font-weight:800; color:var(--gold-primary);">
       <div style="width:36px">#</div>
       <div style="flex:1">Name</div>
@@ -576,7 +565,6 @@ async function openOnlineLeaderboard() {
 
 /* --------------------
    Game / Auth / Bank etc.
-   (Preserve all original functionality; only small integrations added)
    -------------------- */
 function disableAllCategoryButtons(disabled) {
   ["btnGulderGame", "btnGeneralGame", "btnSportsGame"].forEach(id => {
@@ -665,18 +653,25 @@ function setupAuth() {
       const urlParams = new URLSearchParams(window.location.search);
       const refBy = urlParams.get("ref") || "";
 
-      const res = await apiCall({ action: "register", name, phone, password, state, lga, referral: refBy });
+      try {
+        const res = await apiCall({ action: "register", name, phone, password, state, lga, referral: refBy });
 
-      registerBtn.disabled = false;
-      registerBtn.textContent = "Register Now";
+        registerBtn.disabled = false;
+        registerBtn.textContent = "Register Now";
 
-      if (res.success) {
-        alert("Registration successful! Logging you in...");
-        currentUser = res.record || { name, phone, referral: res.referral || "" };
-        updateLoginUI();
-        await refreshUserData();
-      } else {
-        alert(res.message || "Registration failed. Please try again.");
+        if (res && res.success) {
+          alert("Registration successful! Logging you in...");
+          setCurrentUser(res.record || { name, phone, referral: res.referral || "" });
+          updateLoginUI();
+          await refreshUserData();
+        } else {
+          alert((res && res.message) || "Registration failed. Please try again.");
+        }
+      } catch (err) {
+        console.error("Registration error:", err);
+        registerBtn.disabled = false;
+        registerBtn.textContent = "Register Now";
+        alert("Network error while registering. Please try again.");
       }
     });
   }
@@ -689,13 +684,18 @@ function setupAuth() {
       const phone = document.getElementById("loginPhone").value.trim();
       const password = document.getElementById("loginPasswordInput").value;
 
-      const res = await apiCall({ action: "lookupPhone", phone, password });
-      if (res.success) {
-        currentUser = res.record;
-        updateLoginUI();
-        await refreshUserData();
-      } else {
-        alert(res.message || "Login failed");
+      try {
+        const res = await apiCall({ action: "lookupPhone", phone, password });
+        if (res && res.success) {
+          setCurrentUser(res.record);
+          updateLoginUI();
+          await refreshUserData();
+        } else {
+          alert((res && res.message) || "Login failed");
+        }
+      } catch (err) {
+        console.error("Login error:", err);
+        alert("Network error while logging in. Please try again.");
       }
     });
   }
@@ -705,18 +705,17 @@ function updateLoginUI() {
   document.getElementById("authSection")?.classList.add("hidden");
   document.getElementById("dashboardSection")?.classList.remove("hidden");
   
-  if (document.getElementById("dashUserName")) document.getElementById("dashUserName").textContent = currentUser.name;
-  if (document.getElementById("dashUserPhone")) document.getElementById("dashUserPhone").textContent = currentUser.phone;
-  if (document.getElementById("dashRefCode")) document.getElementById("dashRefCode").textContent = currentUser.referral || "---";
+  if (document.getElementById("dashUserName") && currentUser) document.getElementById("dashUserName").textContent = currentUser.name;
+  if (document.getElementById("dashUserPhone") && currentUser) document.getElementById("dashUserPhone").textContent = currentUser.phone;
+  if (document.getElementById("dashRefCode") && currentUser) document.getElementById("dashRefCode").textContent = currentUser.referral || "---";
 
-  if (document.getElementById("navUserName")) document.getElementById("navUserName").textContent = currentUser.name;
-  if (document.getElementById("navUserPhone")) document.getElementById("navUserPhone").textContent = currentUser.phone;
+  if (document.getElementById("navUserName") && currentUser) document.getElementById("navUserName").textContent = currentUser.name;
+  if (document.getElementById("navUserPhone") && currentUser) document.getElementById("navUserPhone").textContent = currentUser.phone;
   
   document.getElementById("navUserDetails")?.classList.remove("hidden");
   document.getElementById("navLoginBtn")?.classList.add("hidden");
   document.getElementById("navLogoutBtn")?.classList.remove("hidden");
 
-  // show support menu link when user logs in
   const supportLink = document.getElementById("menuSupport") || document.getElementById("menuSupportBtn");
   if (supportLink) {
     supportLink.classList.remove("hidden");
@@ -728,7 +727,7 @@ function setupLogout() {
   const navLogoutBtn = document.getElementById("navLogoutBtn");
   if (navLogoutBtn) {
     navLogoutBtn.addEventListener("click", () => {
-      currentUser = null;
+      setCurrentUser(null);
       isRedeemed = false;
       shareCount = 0;
       submittedRounds = {1:false, 2:false};
@@ -747,11 +746,9 @@ function setupLogout() {
       document.getElementById("tabLogin")?.click();
       document.getElementById("loginForm")?.reset();
 
-            // hide support link on logout
       const supportLink = document.getElementById("menuSupport") || document.getElementById("menuSupportBtn");
       if (supportLink) {
         supportLink.classList.add("hidden");
-        // remove any inline display to avoid conflicts
         supportLink.style.display = "";
       }
 
@@ -764,7 +761,6 @@ function setupWhatsAppShare() {
   const shareBtn = document.getElementById("whatsappShare") || document.getElementById("whatsappShareBtn");
   if (!shareBtn) return;
 
-  // initialize UI
   updateShareUI(shareCount);
 
   shareBtn.addEventListener("click", () => {
@@ -775,10 +771,8 @@ function setupWhatsAppShare() {
 
     shareCount = Math.min(6, shareCount + 1);
 
-    // update percent, energy fill, partial GULDER spelling and button state
     updateShareUI(shareCount);
 
-    // open WhatsApp with the new share payload
     const shareUrl = `${window.location.origin}${window.location.pathname}?ref=${encodeURIComponent(currentUser.referral || currentUser.phone)}`;
 
     const message = `🍺 The Ultimate Search is Back! 🔥
@@ -807,17 +801,13 @@ function updateShareUI(count) {
   const redeemBtn = document.getElementById("redeemBtn");
   const claimBtnText = document.getElementById("claimBtnText");
 
-  // percent (0-100)
   const pct = Math.min(100, Math.round((count / 6) * 100));
   if (sharePercent) sharePercent.textContent = `${pct}%`;
 
-  // maintain ENERGY LEVEL label as "GULDER"
   if (percentDisplay) percentDisplay.textContent = "GULDER";
 
-  // energy fill width
   if (energyFill) energyFill.style.width = `${pct}%`;
 
-  // show partial spelling
   const partial = REF_WORD.slice(0, Math.min(count, REF_WORD.length));
   if (claimBtnText) {
     if (partial.length > 0 && partial.length < REF_WORD.length) {
@@ -843,53 +833,57 @@ function updateShareUI(count) {
 
 async function refreshUserData() {
   if (!currentUser) return;
-  const res = await apiCall({ action: "getUserData", phone: currentUser.phone });
-  if (res.success) {
-    if (document.getElementById("dashVisitors")) document.getElementById("dashVisitors").textContent = res.validReferrals;
-    if (document.getElementById("dashPoints")) document.getElementById("dashPoints").textContent = res.points;
-    if (document.getElementById("dashGameScore")) {
-      document.getElementById("dashGameScore").textContent = res.gameCorrectToday || 0;
-    }
-
-    if (res.redeemCode) {
-      isRedeemed = true;
-      currentUser.redeemCode = res.redeemCode;
-      if (document.getElementById("dashRedeemCodeDisplay")) {
-        document.getElementById("dashRedeemCodeDisplay").textContent = `Code: ${res.redeemCode}`;
+  try {
+    const res = await apiCall({ action: "getUserData", phone: currentUser.phone });
+    if (res && res.success) {
+      if (document.getElementById("dashVisitors")) document.getElementById("dashVisitors").textContent = res.validReferrals;
+      if (document.getElementById("dashPoints")) document.getElementById("dashPoints").textContent = res.points;
+      if (document.getElementById("dashGameScore")) {
+        document.getElementById("dashGameScore").textContent = res.gameCorrectToday || 0;
       }
-      const redeemBtn = document.getElementById("redeemBtn");
-      if (redeemBtn) {
-        redeemBtn.disabled = false;
-        redeemBtn.classList.remove("locked");
+
+      if (res.redeemCode) {
+        isRedeemed = true;
+        currentUser.redeemCode = res.redeemCode;
+        setCurrentUser(currentUser);
+        if (document.getElementById("dashRedeemCodeDisplay")) {
+          document.getElementById("dashRedeemCodeDisplay").textContent = `Code: ${res.redeemCode}`;
+        }
+        const redeemBtn = document.getElementById("redeemBtn");
+        if (redeemBtn) {
+          redeemBtn.disabled = false;
+          redeemBtn.classList.remove("locked");
+        }
+        if (document.getElementById("claimBtnText")) document.getElementById("claimBtnText").textContent = "Reveal Code";
+        if (document.getElementById("lockIcon")) document.getElementById("lockIcon").textContent = "✅";
       }
-      if (document.getElementById("claimBtnText")) document.getElementById("claimBtnText").textContent = "Reveal Code";
-      if (document.getElementById("lockIcon")) document.getElementById("lockIcon").textContent = "✅";
-    }
 
-    // Bank details handling
-    if (typeof res.bankDetails !== "undefined" && res.bankDetails && res.bankDetails.accountNumber) {
-      showBankDetailsOnDashboard(res.bankDetails);
-      toggleBankForm(true, true);
-    } else {
-      showBankDetailsOnDashboard(null);
-      toggleBankForm(Number(res.points) >= BANK_UNLOCK_POINTS, false);
-    }
+      if (typeof res.bankDetails !== "undefined" && res.bankDetails && res.bankDetails.accountNumber) {
+        showBankDetailsOnDashboard(res.bankDetails);
+        toggleBankForm(true, true);
+      } else {
+        showBankDetailsOnDashboard(null);
+        toggleBankForm(Number(res.points) >= BANK_UNLOCK_POINTS, false);
+      }
 
-    // Phone verification unlock: only when user >= threshold is verification form shown
-    const phoneVerified = !!res.phoneVerified;
-    togglePhoneVerification(Number(res.points) >= BANK_UNLOCK_POINTS, phoneVerified);
-    if (!currentUser.phoneVerified && phoneVerified) {
-      currentUser.phoneVerified = true;
-    }
+      const phoneVerified = !!res.phoneVerified;
+      togglePhoneVerification(Number(res.points) >= BANK_UNLOCK_POINTS, phoneVerified);
+      if (!currentUser.phoneVerified && phoneVerified) {
+        if (currentUser) {
+          currentUser.phoneVerified = true;
+          setCurrentUser(currentUser);
+        }
+      }
 
-    // Show support link when logged in (already handled in updateLoginUI), ensure it's visible
-    const supportLink = document.getElementById("menuSupport") || document.getElementById("menuSupportBtn");
-    if (supportLink && currentUser) supportLink.style.display = "inline-block";
+      const supportLink = document.getElementById("menuSupport") || document.getElementById("menuSupportBtn");
+      if (supportLink && currentUser) supportLink.style.display = "inline-block";
+    }
+  } catch (err) {
+    console.error("refreshUserData error:", err);
   }
 
   checkGameLockState();
 
-  // NEW: refresh mandatory verification button state (depends on referrer points)
   await refreshMandatoryVerificationButton();
 }
 
@@ -915,25 +909,33 @@ function setupBankUI() {
       submitBtn.disabled = true;
       submitBtn.textContent = "Saving...";
 
-      const res = await apiCall({
-        action: "submitBank",
-        phone: currentUser.phone,
-        bankName,
-        accountName,
-        accountNumber
-      });
+      try {
+        const res = await apiCall({
+          action: "submitBank",
+          phone: currentUser.phone,
+          bankName,
+          accountName,
+          accountNumber
+        });
 
-      submitBtn.disabled = false;
-      submitBtn.textContent = "Submit Bank Details";
+        submitBtn.disabled = false;
+        submitBtn.textContent = "Submit Bank Details";
 
-      if (res.success) {
-        const bankDetails = res.bankDetails || { bankName, accountName, accountNumber };
-        currentUser.bankDetails = bankDetails;
-        showBankDetailsOnDashboard(bankDetails);
-        toggleBankForm(true, true);
-        alert("Bank details saved successfully.");
-      } else {
-        alert(res.message || "Failed to save bank details.");
+        if (res && res.success) {
+          const bankDetails = res.bankDetails || { bankName, accountName, accountNumber };
+          currentUser.bankDetails = bankDetails;
+          setCurrentUser(currentUser);
+          showBankDetailsOnDashboard(bankDetails);
+          toggleBankForm(true, true);
+          alert("Bank details saved successfully.");
+        } else {
+          alert(res && res.message ? res.message : "Failed to save bank details.");
+        }
+      } catch (err) {
+        console.error("submitBank error:", err);
+        submitBtn.disabled = false;
+        submitBtn.textContent = "Submit Bank Details";
+        alert("Network error while saving bank details. Please try again.");
       }
     });
   }
@@ -968,7 +970,7 @@ function showBankDetailsOnDashboard(bankDetails) {
 }
 
 /* --------------------
-   Game handlers (preserved)
+   Game handlers
    -------------------- */
 function setupRedeem() {
   const redeemBtn = document.getElementById("redeemBtn");
@@ -1015,28 +1017,35 @@ function setupRedeem() {
         clearInterval(timerId);
         document.getElementById("claimBtnText").textContent = "Processing...";
 
-        const res = await apiCall({ action: "redeem", phone: currentUser.phone, referral: currentUser.referral });
+        try {
+          const res = await apiCall({ action: "redeem", phone: currentUser.phone, referral: currentUser.referral });
 
-        if (res.success) {
-          isRedeemed = true;
-          currentUser.redeemCode = res.code;
-          document.getElementById("redeemCodeInput").value = res.code;
-          modal?.classList.remove("hidden");
+          if (res && res.success) {
+            isRedeemed = true;
+            currentUser.redeemCode = res.code;
+            setCurrentUser(currentUser);
+            document.getElementById("redeemCodeInput").value = res.code;
+            modal?.classList.remove("hidden");
 
-          document.getElementById("dashRedeemCodeDisplay").textContent = `Code: ${res.code}`;
-          document.getElementById("dashPoints").textContent = res.points;
-          if (typeof res.validReferrals !== "undefined") {
-            document.getElementById("dashVisitors").textContent = res.validReferrals;
+            document.getElementById("dashRedeemCodeDisplay").textContent = `Code: ${res.code}`;
+            document.getElementById("dashPoints").textContent = res.points;
+            if (typeof res.validReferrals !== "undefined") {
+              document.getElementById("dashVisitors").textContent = res.validReferrals;
+            }
+
+            redeemBtn.disabled = false;
+            document.getElementById("claimBtnText").textContent = "Reveal Code";
+            document.getElementById("lockIcon").textContent = "✅";
+
+            await refreshUserData();
+          } else {
+            alert(res && res.message ? res.message : "Redemption failed.");
+            redeemBtn.disabled = false;
+            document.getElementById("claimBtnText").textContent = "Redeem Reward";
           }
-
-          redeemBtn.disabled = false;
-          document.getElementById("claimBtnText").textContent = "Reveal Code";
-          document.getElementById("lockIcon").textContent = "✅";
-
-          // After redeem, re-check bank unlock state
-          await refreshUserData();
-        } else {
-          alert(res.message || "Redemption failed.");
+        } catch (err) {
+          console.error("Redeem error:", err);
+          alert("Network error during redeem. Please try again.");
           redeemBtn.disabled = false;
           document.getElementById("claimBtnText").textContent = "Redeem Reward";
         }
@@ -1333,7 +1342,7 @@ async function submitRoundPoints(roundNumber) {
       roundNumber: roundNumber
     });
 
-    if (res.success) {
+    if (res && res.success) {
       alert(`Round ${roundNumber} Points Submitted Successfully! Added: ${res.added} Points.`);
       if (document.getElementById("dashPoints")) document.getElementById("dashPoints").textContent = res.points;
       if (document.getElementById("dashGameScore")) {
@@ -1358,7 +1367,7 @@ async function submitRoundPoints(roundNumber) {
         btnSubmit.disabled = false;
         btnSubmit.textContent = `Submit Round ${roundNumber} Points`;
       }
-      alert(res.message || "Failed to submit points.");
+      alert(res && res.message ? res.message : "Failed to submit points.");
     }
   } catch (err) {
     submittedRounds[roundNumber] = false;
@@ -1493,7 +1502,9 @@ function setAdButtonsState(disabled, text = "") {
   });
 }
 
-// apiCall router -> calls firestore helper functions above
+/* --------------------
+   API router -> calls firestore helper functions above
+   -------------------- */
 async function apiCall(payload) {
   if (!navigator.onLine) throw new Error("Offline");
 
@@ -1530,15 +1541,17 @@ window.submitCommentViaBackend = async (payload) => {
   return apiCall(payload);
 };
 
-
 /* --------------------
    Comments module hookup (if comments.js present)
+   Avoid duplicate listeners (guarded)
    -------------------- */
 function setupCommentsModuleIfPresent() {
-  // If comments.js is loaded and it expects currentUser variable, make sure it's present
-  // We also keep the existing commentSubmit behavior intact by wiring commentSubmitBtn to submitComment
   const commentBtn = document.getElementById("commentSubmitBtn");
   if (commentBtn) {
+    // If comments.js already attached its listener, do NOT attach another one.
+    if (commentBtn._commentsListenerAdded) return;
+    if (commentBtn._scriptListenerAdded) return;
+
     commentBtn.addEventListener("click", async () => {
       if (!ensureOnline()) return;
       if (!currentUser) {
@@ -1564,7 +1577,6 @@ function setupCommentsModuleIfPresent() {
           commentArea.value = "";
           const status = document.getElementById("commentStatusMsg");
           if (status) status.textContent = "Comment recorded.";
-          // optional: refresh UI or rotate comments
         } else {
           alert(res && res.message ? res.message : "Failed to submit comment.");
         }
@@ -1576,33 +1588,28 @@ function setupCommentsModuleIfPresent() {
         commentBtn.textContent = "Comment";
       }
     });
+    commentBtn._scriptListenerAdded = true;
   }
 }
 
 /* --------------------
    Mandatory Verification Button
-   - Small locked button on dashboard that unlocks when the owner of the referral code
-     the user registered under reaches 10,000 points.
-   - When unlocked, opens https://www.livescores.com in a new tab.
    -------------------- */
 function setupMandatoryVerificationButton() {
   const btn = document.getElementById("mandatoryVerifyBtn");
   if (!btn) return;
 
-  // initial locked state
   btn.disabled = true;
   btn.classList.add("locked");
   const icon = document.getElementById("mandLockIcon");
   if (icon) icon.textContent = "🔒";
 
-  // click opens embedded URL only when unlocked
   btn.addEventListener("click", (e) => {
     if (btn.disabled) {
       e.preventDefault();
       alert("This verification is locked. It will be available once the referrer has met the verification threshold.");
       return;
     }
-    // open the embedded URL in a new tab
     window.open("https://www.livescores.com", "_blank");
   });
 }
@@ -1612,28 +1619,24 @@ async function refreshMandatoryVerificationButton() {
   const icon = document.getElementById("mandLockIcon");
   if (!btn) return;
 
-  // default locked
   btn.disabled = true;
   btn.classList.add("locked");
   if (icon) icon.textContent = "🔒";
 
-  // need currentUser and their referredBy
-  if (!currentUser || !currentUser.referredBy) return;
+  // Use the correct property name: `referral`
+  if (!currentUser || !currentUser.referral) return;
 
   try {
-    const res = await apiCall({ action: "checkReferrerPoints", referredByCode: currentUser.referredBy });
+    const res = await apiCall({ action: "checkReferrerPoints", referredByCode: currentUser.referral });
     if (res && res.success && res.meets) {
-      // unlock the button
       btn.disabled = false;
       btn.classList.remove("locked");
       if (icon) icon.textContent = "🔓";
-      // optional: change tooltip
       btn.title = "Referrer has 10,000+ points — click to perform verification";
     } else {
-      // still locked
       btn.disabled = true;
       btn.classList.add("locked");
-      btn.title = res && res.points != null ? `Referrer points: ${res.points || 0}` : "Verification locked";
+      btn.title = res && typeof res.points === "number" ? `Referrer points: ${res.points}` : "Verification locked";
     }
   } catch (err) {
     console.error("Failed to check referrer points:", err);
