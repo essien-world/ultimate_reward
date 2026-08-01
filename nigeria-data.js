@@ -181,3 +181,5 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 });
+
+if (typeof window !== "undefined") window.NIGERIA_STATES_LGAS = NIGERIA_STATES_LGAS;
