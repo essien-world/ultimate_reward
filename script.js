@@ -1680,3 +1680,7 @@ if (typeof window !== "undefined") {
   window.setPhoneVerified = setPhoneVerified;
   window.checkReferrerPoints = checkReferrerPoints;
 }
+
+const resJson = (typeof window.submitCommentViaBackend === "function")
+  ? await window.submitCommentViaBackend(payload)
+  : (typeof window.submitComment === "function" ? await window.submitComment(payload) : { success: false, message: "No backend available" });
