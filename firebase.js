@@ -1,5 +1,5 @@
 // firebase.js (module)
-import { initializeApp } from "https://www.gstatic.com/firebasejs/9.24.0/firebase-app.js";
+import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
 import {
   getFirestore,
   collection,
@@ -15,13 +15,13 @@ import {
   updateDoc,
   serverTimestamp,
   runTransaction
-} from "https://www.gstatic.com/firebasejs/9.24.0/firebase-firestore.js";
+} from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
 import {
   getAuth,
   createUserWithEmailAndPassword,
   signInWithEmailAndPassword,
   signOut
-} from "https://www.gstatic.com/firebasejs/9.24.0/firebase-auth.js";
+} from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
 
 // Put your firebaseConfig here (same as you had)
 const firebaseConfig = {
