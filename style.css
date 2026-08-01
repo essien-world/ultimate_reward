@@ -847,4 +847,31 @@ button:disabled {
   }
 }
 
+@media (max-width: 768px) {
+  .menu-links {
+    display: none;
+    flex-direction: column;
+    position: absolute;
+    top: 64px;
+    left: 0;
+    width: 100%;
+    background: #000;
+    padding: 15px;
+  }
+  .menu-links.mobile-active {
+    display: flex;
+  }
+}
+
+.menu {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: nowrap;
+}
+.menu-right {
+  display: flex;
+  align-items: center;
+}
+
 .hidden { display: none !important; }
