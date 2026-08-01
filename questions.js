@@ -414,3 +414,5 @@ const SPORTS_QUESTIONS = [
 
 // expose for legacy scripts
 if (typeof window !== "undefined") window.GULDER_QUESTIONS = GULDER_QUESTIONS;
+
+
