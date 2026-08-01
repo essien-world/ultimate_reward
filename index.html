@@ -21,16 +21,29 @@
   <nav class="menu" role="navigation">
     <div class="menu-brand">
       <img src="https://github.com/user-attachments/assets/5c969afb-f8b6-4e04-adfa-91af72c53c58" alt="Drink Logo" class="brand-logo-img" />
+      
+      <!-- Always Visible Quick Action Links on Mobile -->
+      <div class="menu-quick-actions">
+        <a href="#gameSection" id="menuGame" class="quick-btn">Trivia</a>
+        <a href="#" id="menuLeaderboard" class="quick-btn">Leaderboard</a>
+      </div>
+
+      <!-- Mobile Toggle Icon -->
+      <button class="menu-toggle" id="mobileMenuToggle" aria-label="Toggle navigation">
+        <span class="bar"></span>
+        <span class="bar"></span>
+        <span class="bar"></span>
+      </button>
     </div>
-    <div class="menu-links">
+    
+    <!-- Collapsible Links Container (Home, FAQ, Support) -->
+    <div class="menu-links" id="menuLinksContainer">
       <a href="#heroSection" id="menuHome">Home</a>
-      <a href="#gameSection" id="menuGame">Trivia Game</a>
-      <a href="#" id="menuLeaderboard">Online Leaderboard</a>
       <a href="#" id="menuFAQ">FAQ</a>
       <a href="#" id="menuSupportBtn">Support</a>
     </div>
     
-    <!-- Updated User Info & Auth Buttons Area -->
+    <!-- User Info & Auth Buttons Area -->
     <div class="menu-right" id="menuUserInfo">
       <div id="navUserDetails" class="nav-user-details hidden">
         <span id="navUserName" class="nav-user-name"></span>

@@ -176,5 +176,22 @@ if (document.readyState === 'loading') {
   setupMenuHandlers();
 }
 
+// Mobile Hamburger Menu Toggle
+  const mobileToggle = $('mobileMenuToggle');
+  const menuLinksContainer = $('menuLinksContainer');
+  
+  if (mobileToggle && menuLinksContainer) {
+    mobileToggle.addEventListener('click', () => {
+      menuLinksContainer.classList.toggle('mobile-active');
+    });
+
+    // Close dropdown menu automatically when a link inside it is tapped
+    menuLinksContainer.querySelectorAll('a').forEach(link => {
+      link.addEventListener('click', () => {
+        menuLinksContainer.classList.remove('mobile-active');
+      });
+    });
+  }
+
 // expose for debugging
 if (typeof window !== 'undefined') window._menuFixes = { populateLeaderboard, populateFaq };
