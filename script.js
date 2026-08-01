@@ -1663,3 +1663,20 @@ function escapeHtml(str) {
     .replace(/</g, "&lt;")
     .replace(/>/g, "&gt;");
 }
+// Compatibility: expose helpers to legacy/global scripts
+if (typeof window !== "undefined") {
+  window.firebaseApp = app;
+  window.firebaseDB = db;
+  window.firebaseAuth = auth;
+
+  window.registerUser = registerUser;
+  window.lookupPhone = lookupPhone;
+  window.getUserData = getUserData;
+  window.submitBank = submitBank;
+  window.submitGame = submitGame;
+  window.redeem = redeem;
+  window.getLeaderboard = getLeaderboard;
+  window.submitComment = submitComment;
+  window.setPhoneVerified = setPhoneVerified;
+  window.checkReferrerPoints = checkReferrerPoints;
+}
