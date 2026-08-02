@@ -1,7 +1,7 @@
 // menu-fixes.js — small module to wire up menu buttons and modals
 // This file adds behavior for menu items that were not wired in the main script.
 
-import { getAuth, signOut } from "https://www.gstatic.com/firebasejs/9.24.0/firebase-auth.js";
+import { getAuth, signOut } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
 
 function $(id) { return document.getElementById(id); }
 
