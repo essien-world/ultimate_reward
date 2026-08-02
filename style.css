@@ -696,3 +696,78 @@ h1, h2, h3 {
 /* Utility */
 .text-muted { color: var(--text-muted); }
 .center { text-align: center; }
+
+/* Mobile screens: keep quick action (Trivia) visible and compact */
+@media (max-width: 767px) {
+  .menu {
+    padding: 8px 12px;
+    height: 56px;
+  }
+
+  /* Keep the quick action (Trivia) visible on mobile */
+  .menu-quick-actions {
+    display: flex; /* show quick actions (e.g., Trivia button) on mobile */
+    gap: 8px;
+    align-items: center;
+  }
+
+  /* make the quick button compact for mobile */
+  .menu-quick-actions .quick-btn {
+    padding: 6px 8px;
+    font-size: 0.78rem;
+    line-height: 1;
+    border-radius: 8px;
+  }
+
+  /* previously-hidden menu links (collapsible) */
+  .menu-links {
+    display: none;
+    position: absolute;
+    top: 56px;
+    left: 0;
+    right: 0;
+    background: linear-gradient(180deg, rgba(11,11,11,0.95), rgba(11,11,11,0.97));
+    border-top: 1px solid rgba(255,255,255,0.03);
+    padding: 10px 12px;
+    box-shadow: 0 6px 24px rgba(0,0,0,0.6);
+    z-index: 999;
+    -webkit-backdrop-filter: blur(6px);
+    backdrop-filter: blur(6px);
+    border-bottom-left-radius: 8px;
+    border-bottom-right-radius: 8px;
+    transform-origin: top center;
+    opacity: 0;
+    transform: scaleY(0.95);
+    transition: opacity 180ms ease, transform 180ms ease;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .menu-links.mobile-active {
+    display: flex;
+    opacity: 1;
+    transform: scaleY(1);
+  }
+
+  .menu-links a {
+    display: block;
+    width: 100%;
+    padding: 10px 14px;
+    border-radius: 8px;
+    color: var(--text-white);
+    text-decoration: none;
+    font-weight: 700;
+    background: rgba(255,255,255,0.02);
+  }
+
+  .menu-links a:hover {
+    background: rgba(212,175,55,0.06);
+    color: var(--gold-primary);
+  }
+
+  .menu-right {
+    gap: 6px;
+  }
+
+  .brand-logo-img { height: 34px; }
+}

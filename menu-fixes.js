@@ -169,25 +169,29 @@ function setupMenuHandlers() {
     });
   }
 
-  // FAQ Handler - FIXED: Remove duplicate listener and ensure proper event handling
+    // FAQ Handler - ensure it opens the modal and closes mobile menu when on mobile
   if (menuFAQ) {
     menuFAQ.addEventListener('click', (e) => {
       e.preventDefault();
       e.stopPropagation();
-      console.log("FAQ button clicked from menu-fixes.js");
+      // populate the modal contents (creates modal if needed)
       populateFaq();
+      // open the faq modal
       openModal($('faqModal'));
-    });
-  }
 
-  if (menuSupportBtn) {
-    menuSupportBtn.addEventListener('click', (e) => {
-      if (e) { e.preventDefault(); e.stopPropagation(); }
-      const modal = $('supportModal');
-      if (typeof window.openSupportModal === 'function') {
-        window.openSupportModal();
-      } else if (modal) {
-        openModal(modal);
+      // If mobile menu is open, close it to avoid modal being visually behind the menu
+      try {
+        const menuLinks = document.getElementById('menuLinksContainer');
+        const mobileToggle = document.getElementById('mobileMenuToggle');
+        if (menuLinks && menuLinks.classList.contains('mobile-active')) {
+          menuLinks.classList.remove('mobile-active');
+        }
+        if (mobileToggle) {
+          mobileToggle.setAttribute('aria-expanded', 'false');
+        }
+      } catch (err) {
+        // non-fatal; we still opened FAQ
+        console.warn('Error while trying to close mobile menu after opening FAQ', err);
       }
     });
   }
