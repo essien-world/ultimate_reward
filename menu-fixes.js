@@ -2,7 +2,7 @@
 // This file adds behavior for menu items that were not wired in the main script.
 
 import { getAuth, signOut } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
-import { FAQS } from './faq.js'; // Add this line
+import { FAQS } from './faq.js'; 
 
 function $(id) { return document.getElementById(id); }
 
@@ -68,14 +68,16 @@ function populateFaq() {
   const faqList = $('faqList');
   if (!faqList) return;
   
-  // Directly use the imported FAQS array
-  if (!FAQS || FAQS.length === 0) {
+  // FIXED: Check both the module import and the global window attachment
+  const faqData = (typeof FAQS !== 'undefined' && FAQS.length > 0) ? FAQS : window.FAQS;
+  
+  if (!faqData || faqData.length === 0) {
     faqList.innerHTML = '<div style="color:var(--text-muted); padding:12px;">FAQ data not available</div>';
     return;
   }
   
   faqList.innerHTML = '';
-  FAQS.forEach((f) => {
+  faqData.forEach((f) => {
     const item = document.createElement('div');
     item.style.marginBottom = '10px';
     item.innerHTML = `<details style="background:rgba(0,0,0,0.35); padding:10px; border-radius:6px; margin-bottom:6px;"><summary style="color:var(--gold-primary); font-weight:700; cursor:pointer;">${escapeHtml(f.question)}</summary><div style="margin-top:8px; color:var(--text-muted);">${escapeHtml(f.answer)}</div></details>`;
@@ -116,10 +118,9 @@ function setupMenuHandlers() {
     });
   }
 
-    if (menuFAQ) {
+  if (menuFAQ) {
     menuFAQ.addEventListener('click', (e) => {
       e && e.preventDefault();
-      // Bypass any legacy global functions and force our local data and modal to run
       populateFaq();
       openModal($('faqModal'));
     });
@@ -132,11 +133,9 @@ function setupMenuHandlers() {
     supportLink.href = "#";
     supportLink.id = "menuSupport";
     supportLink.textContent = "Support";
-    // visible to all users (no hidden state)
     const menuLinks = document.querySelector(".menu-links");
     if (menuLinks) menuLinks.appendChild(supportLink);
   } else {
-    // ensure it's shown
     supportLink.style.display = "inline-block";
   }
 
@@ -144,15 +143,12 @@ function setupMenuHandlers() {
     supportLink.addEventListener('click', (e) => {
       e && e.preventDefault();
       const modal = $('supportModal');
-      // open support modal via existing global function if present, otherwise fallback
       if (typeof window.openSupportModal === 'function') {
         window.openSupportModal();
       } else {
-        // populate and open the support modal in-place if not handled elsewhere
         if (modal) {
           modal.classList.remove('hidden');
         } else if (typeof window.openSupportModal === 'undefined') {
-          // If the main script's openSupportModal is not exposed, try invoking it via click on menu Support (main script attaches handler)
           try { supportLink.click(); } catch (err) { /* no-op */ }
         }
       }
@@ -172,40 +168,35 @@ function setupMenuHandlers() {
   // nav login/logout
   const navLoginBtn = $('navLoginBtn');
   const navLogoutBtn = $('navLogoutBtn');
-  if (navLoginBtn) navLoginBtn.addEventListener('click', (e) => {
-    e && e.preventDefault();
-    safeCall(() => document.getElementById('authSection').scrollIntoView({ behavior: 'smooth' }));
-    const phoneInput = $('phone') || $('loginPhone');
-    if (phoneInput) phoneInput.focus();
-  });
+  
+  if (navLoginBtn) {
+    navLoginBtn.addEventListener('click', (e) => {
+      e && e.preventDefault();
+      safeCall(() => document.getElementById('authSection').scrollIntoView({ behavior: 'smooth' }));
+      const phoneInput = $('phone') || $('loginPhone');
+      if (phoneInput) phoneInput.focus();
+    });
+  }
 
-  if (navLogoutBtn) navLogoutBtn.addEventListener('click', async (e) => {
-    e && e.preventDefault();
-    try {
-      await signOut(getAuth());
-      // simple UI update if app exposes updateLoginUI
-      if (typeof window.updateLoginUI === 'function') window.updateLoginUI(null);
-      // fallback: show login button
-      const navUserDetails = $('navUserDetails');
-      if (navUserDetails) navUserDetails.classList.add('hidden');
-      if (navLoginBtn) navLoginBtn.classList.remove('hidden');
-      if (navLogoutBtn) navLogoutBtn.classList.add('hidden');
-      alert('You have been logged out.');
-    } catch (err) {
-      console.error('Sign out failed', err);
-      alert('Failed to sign out.');
-    }
-  });
-}
+  if (navLogoutBtn) {
+    navLogoutBtn.addEventListener('click', async (e) => {
+      e && e.preventDefault();
+      try {
+        await signOut(getAuth());
+        if (typeof window.updateLoginUI === 'function') window.updateLoginUI(null);
+        const navUserDetails = $('navUserDetails');
+        if (navUserDetails) navUserDetails.classList.add('hidden');
+        if (navLoginBtn) navLoginBtn.classList.remove('hidden');
+        if (navLogoutBtn) navLogoutBtn.classList.add('hidden');
+        alert('You have been logged out.');
+      } catch (err) {
+        console.error('Sign out failed', err);
+        alert('Failed to sign out.');
+      }
+    });
+  }
 
-// Wire up when DOM ready
-if (document.readyState === 'loading') {
-  document.addEventListener('DOMContentLoaded', setupMenuHandlers);
-} else {
-  setupMenuHandlers();
-}
-
-// Mobile Hamburger Menu Toggle Fix
+  // FIXED: Mobile Hamburger Menu Toggle now inside the initializer safely
   const mobileToggle = $('mobileMenuToggle');
   const menuLinksContainer = $('menuLinksContainer');
   
@@ -222,6 +213,14 @@ if (document.readyState === 'loading') {
       });
     });
   }
+}
+
+// Wire up when DOM ready
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', setupMenuHandlers);
+} else {
+  setupMenuHandlers();
+}
 
 // expose for debugging
 if (typeof window !== 'undefined') window._menuFixes = { populateLeaderboard, populateFaq };
