@@ -148,6 +148,9 @@ function setupMenuFAQHandler() {
   });
 }
 
+/* --------------------
+   FAQ Modal (collapsible) - replaced to use side panel / bottom sheet (non-blocking)
+   -------------------- */
 function openFaqModal() {
   if (typeof FAQS === "undefined") {
     alert("FAQ content is not available.");
@@ -158,24 +161,32 @@ function openFaqModal() {
   if (!modal) {
     modal = document.createElement("div");
     modal.id = "faqModal";
-    modal.className = "modal hidden";
+    modal.className = "faq-panel hidden";
+    modal.setAttribute("aria-hidden", "true");
+
     const inner = document.createElement("div");
-    inner.className = "modal-content";
-    inner.style.maxHeight = "70vh";
+    inner.className = "faq-panel-content";
+    inner.style.maxHeight = "calc(100vh - 160px)";
     inner.style.overflow = "auto";
 
-    inner.innerHTML = `<h3 style="color:#d4af37; margin-bottom:8px;">Frequently Asked Questions</h3>
-      <p style="color:var(--text-muted); font-size:0.9rem; margin-bottom:12px;">Tap any question to expand its answer.</p>
-      <div id="faqList" style="display:flex; flex-direction:column; gap:8px;"></div>
-      <div style="margin-top:12px; display:flex; gap:8px;">
-        <button id="closeFaqBtn" class="btn btn-dark" style="flex:1;">Close</button>
-      </div>`;
+    inner.innerHTML = `<div style="display:flex; justify-content:space-between; align-items:center;">
+      <h3 style="color:#d4af37; margin:0;">Frequently Asked Questions</h3>
+      <button id="closeFaqBtn" class="btn btn-dark" style="padding:8px 10px;">Close</button>
+    </div>
+    <p style="color:var(--text-muted); font-size:0.9rem; margin-bottom:12px;">Tap any question to expand its answer.</p>
+    <div id="faqList" style="display:flex; flex-direction:column; gap:8px;"></div>`;
 
     modal.appendChild(inner);
     document.body.appendChild(modal);
+
+    // attach close bound to panel close button
+    modal.querySelector("#closeFaqBtn")?.addEventListener("click", () => {
+      modal.classList.add("hidden");
+      modal.setAttribute("aria-hidden", "true");
+    });
   }
 
-  const list = document.getElementById("faqList") || document.getElementById("faqContainer");
+  const list = document.getElementById("faqList");
   if (!list) {
     console.warn("No FAQ container (faqList or faqContainer) found.");
     return;
@@ -212,16 +223,8 @@ function openFaqModal() {
     list.appendChild(row);
   });
 
-  const closeBtn = (modal || document).querySelector("#closeFaqBtn");
-  if (closeBtn && !closeBtn._faqListenerAdded) {
-    closeBtn.addEventListener("click", () => {
-      const mm = document.getElementById("faqModal");
-      if (mm) mm.classList.add("hidden");
-    });
-    closeBtn._faqListenerAdded = true;
-  }
-
   modal.classList.remove("hidden");
+  modal.setAttribute("aria-hidden", "false");
 }
 
 /* --------------------

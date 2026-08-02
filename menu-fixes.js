@@ -5,8 +5,25 @@ import { FAQS } from "./faq.js";
 function $(id) { return document.getElementById(id); }
 function safeCall(fn) { try { fn(); } catch (e) { console.error(e); } }
 
+// openModal / closeModal now support .faq-panel (non-fullscreen panel) and still work for regular modals
 function openModal(modalEl) {
   if (!modalEl) return;
+
+  // If this is the FAQ panel, show as a slide-in panel instead of full-screen modal
+  if (modalEl.classList.contains('faq-panel')) {
+    modalEl.classList.remove('hidden');
+    modalEl.setAttribute('aria-hidden', 'false');
+    modalEl.style.display = 'block';
+    modalEl.style.visibility = 'visible';
+    modalEl.style.opacity = '1';
+    modalEl.style.zIndex = '999999';
+    // ensure focus for accessibility
+    const focusable = modalEl.querySelector('button, [tabindex], input, textarea, a');
+    if (focusable) focusable.focus();
+    return;
+  }
+
+  // fallback: full-screen modal behavior
   modalEl.classList.remove('hidden');
   modalEl.setAttribute('aria-hidden', 'false');
   modalEl.style.setProperty('display', 'flex', 'important');
@@ -17,11 +34,21 @@ function openModal(modalEl) {
 
 function closeModal(modalEl) {
   if (!modalEl) return;
+
+  if (modalEl.classList.contains('faq-panel')) {
+    modalEl.classList.add('hidden');
+    modalEl.setAttribute('aria-hidden', 'true');
+    modalEl.style.display = 'none';
+    modalEl.style.opacity = '0';
+    return;
+  }
+
   modalEl.classList.add('hidden');
   modalEl.setAttribute('aria-hidden', 'true');
   modalEl.style.setProperty('display', 'none', 'important');
 }
 
+/* populateLeaderboard kept minimal by design */
 async function populateLeaderboard() {
   const listEl = $('onlineLeaderboardList');
   if (!listEl) return;
@@ -38,24 +65,33 @@ function escapeHtml(str) {
     .replace(/>/g, '&gt;');
 }
 
+/* Populate the FAQ into a non-blocking side panel (faq-panel) */
 function populateFaq() {
   try {
-    const modal = $('faqModal');
-    let faqList = $('faqList');
-
+    let modal = $('faqModal');
+    // If no panel exists, create a lightweight side panel
     if (!modal) {
-      const m = document.createElement('div');
-      m.id = 'faqModal';
-      m.className = 'modal hidden';
-      m.innerHTML = `<div class="modal-content" style="max-width:740px;">
-        <h3 style="color:var(--gold-primary); margin-bottom:8px;">Frequently Asked Questions</h3>
-        <div id="faqList" style="text-align:left; margin-top:8px;"></div>
-        <div style="margin-top:12px;"><button id="closeFaqBtn" class="btn btn-dark" style="width:100%">Close</button></div>
-      </div>`;
-      document.body.appendChild(m);
+      modal = document.createElement('div');
+      modal.id = 'faqModal';
+      modal.className = 'faq-panel hidden';
+      modal.setAttribute('aria-hidden', 'true');
+
+      // content container
+      const inner = document.createElement('div');
+      inner.className = 'faq-panel-content';
+      inner.innerHTML = `<div class="faq-panel-header" style="display:flex; justify-content:space-between; align-items:center;">
+        <h3 style="color:var(--gold-primary); margin:0;">Frequently Asked Questions</h3>
+        <div style="display:flex; gap:8px; align-items:center;">
+          <button id="closeFaqBtn" class="btn btn-dark" style="padding:8px 10px;">Close</button>
+        </div>
+      </div>
+      <div id="faqList" style="text-align:left; margin-top:12px; display:flex; flex-direction:column; gap:8px;"></div>`;
+
+      modal.appendChild(inner);
+      document.body.appendChild(modal);
     }
 
-    faqList = $('faqList');
+    const faqList = $('faqList');
     if (!faqList) return;
 
     const faqData = (typeof FAQS !== 'undefined' && Array.isArray(FAQS) && FAQS.length > 0) ? FAQS : (window.FAQS || []);
@@ -103,20 +139,24 @@ function populateFaq() {
 
     let modalClose = $('closeFaqBtn');
     if (!modalClose) {
-      const modalContent = modal.querySelector('.modal-content') || modal;
-      modalClose = document.createElement('button');
-      modalClose.id = 'closeFaqBtn';
-      modalClose.className = 'btn btn-dark';
-      modalClose.textContent = 'Close';
-      modalClose.style.width = '100%';
-      const wrapper = document.createElement('div');
-      wrapper.style.marginTop = '12px';
-      wrapper.appendChild(modalClose);
-      modalContent.appendChild(wrapper);
+      // create a fallback close button inside the panel-content header if not found
+      const header = modal.querySelector('.faq-panel-header');
+      if (header) {
+        const btn = document.createElement('button');
+        btn.id = 'closeFaqBtn';
+        btn.className = 'btn btn-dark';
+        btn.textContent = 'Close';
+        btn.style.padding = '8px 10px';
+        header.appendChild(btn);
+        modalClose = btn;
+      }
     }
-    modalClose.removeEventListener('click', modalClose._handler || (() => {}));
-    modalClose._handler = () => closeModal($('faqModal'));
-    modalClose.addEventListener('click', modalClose._handler);
+
+    if (modalClose) {
+      modalClose.removeEventListener('click', modalClose._handler || (() => {}));
+      modalClose._handler = () => closeModal($('faqModal'));
+      modalClose.addEventListener('click', modalClose._handler);
+    }
 
   } catch (err) {
     console.error('populateFaq error', err);

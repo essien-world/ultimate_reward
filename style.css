@@ -684,6 +684,71 @@ h1, h2, h3 {
   box-shadow: 0 10px 40px rgba(0,0,0,0.7);
 }
 
+/* FAQ Panel (non-fullscreen) - right-side panel on desktop, bottom sheet on small screens */
+.faq-panel {
+  position: fixed;
+  right: 20px;
+  top: 72px;
+  width: min(420px, 92%);
+  max-width: 420px;
+  max-height: calc(100vh - 140px);
+  background: #0b0b0b;
+  border-radius: 10px;
+  border: 1px solid rgba(212,175,55,0.06);
+  box-shadow: 0 20px 50px rgba(0,0,0,0.7), 0 6px 18px rgba(0,0,0,0.6);
+  padding: 14px;
+  z-index: 999999;
+  overflow: hidden;
+  transition: transform 220ms ease, opacity 180ms ease;
+  transform: translateY(0);
+  opacity: 1;
+}
+
+/* start hidden state */
+.faq-panel.hidden {
+  opacity: 0;
+  transform: translateY(8px);
+  display: none;
+}
+
+/* content scroll region inside panel */
+.faq-panel .faq-panel-content {
+  overflow: auto;
+  max-height: calc(100vh - 200px);
+  padding-right: 6px;
+}
+
+/* header spacing inside */
+.faq-panel .faq-panel-header,
+.faq-panel > .faq-panel-content > div:first-child {
+  margin-bottom: 8px;
+}
+
+/* mobile: bottom sheet style, full width but not full height */
+@media (max-width: 767px) {
+  .faq-panel {
+    left: 0;
+    right: 0;
+    bottom: 0;
+    top: auto;
+    width: 100%;
+    max-width: 100%;
+    border-bottom-left-radius: 12px;
+    border-bottom-right-radius: 12px;
+    border-top-left-radius: 12px;
+    border-top-right-radius: 12px;
+    max-height: 60vh;
+    padding: 12px;
+    display: block;
+    transform: translateY(0);
+  }
+  .faq-panel.hidden {
+    transform: translateY(18px);
+    opacity: 0;
+    display: none;
+  }
+}
+
 /* Small device adjustments for layout readability */
 @media (max-width: 420px) {
   .container { padding: 0 10px; }
