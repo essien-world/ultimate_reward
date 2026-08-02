@@ -349,13 +349,20 @@
       </div>
     </div>
 
-    <!-- FAQ Modal (collapsible) -->
+    <!-- FAQ Modal -->
     <div id="faqModal" class="modal hidden" aria-hidden="true">
-      <div class="modal-content" style="max-width:640px;">
-        <h3 style="color:var(--gold-primary); margin-bottom:8px;">Frequently Asked Questions</h3>
-        <div id="faqList" style="text-align:left; margin-top:8px;"> <div style="color:var(--text-muted); padding:12px;">Loading FAQ</div> </div>
-        <div style="margin-top:12px;">
-          <button id="closeFaqBtn" class="btn btn-dark" style="width:100%;">Close</button>
+      <div class="modal-content" style="background:#141414; padding:18px; border-radius:10px; max-height:70vh; overflow:hidden;">
+        <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:12px;">
+          <div>
+            <h3 style="color:var(--gold-primary); margin:0 0 6px 0;">Frequently Asked Questions</h3>
+            <p style="color:var(--text-muted); font-size:0.85rem; margin:0 0 10px 0;">Tap any question to expand its answer.</p>
+          </div>
+        </div>
+        <div id="faqList" style="max-height:52vh; overflow:auto; background:#0b0b0b; border-radius:8px; padding:8px; border:1px solid rgba(212,175,55,0.05); text-align:left; display:flex; flex-direction:column; gap:8px;">
+          <div style="color:var(--text-muted); padding:12px;">Loading FAQ</div>
+        </div>
+        <div style="margin-top:12px; display:flex; gap:8px;">
+          <button id="closeFaqBtn" class="btn btn-dark" style="flex:1;">Close</button>
         </div>
       </div>
     </div>
