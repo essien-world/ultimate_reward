@@ -1,4 +1,4 @@
-/* Gulder Ultimate V3.1 Premium Design Additions */
+/* Gulder Ultimate V3.1 Premium Design Additions (updated for responsive menu) */
 :root {
   --bg-black: #0B0B0B;
   --gulder-red-dark: #400000;
@@ -24,7 +24,7 @@
 body {
   font-family: 'Montserrat', system-ui, -apple-system, sans-serif;
   background-color: var(--bg-black);
-  background-image: 
+  background-image:
     radial-gradient(circle at 50% 0%, var(--gulder-red-dark) 0%, transparent 75%),
     radial-gradient(circle at 80% 80%, rgba(64, 0, 0, 0.3) 0%, transparent 50%);
   color: var(--text-white);
@@ -67,6 +67,7 @@ h1, h2, h3 {
   z-index: 1000;
 }
 
+/* Brand */
 .brand-logo-img {
   height: 40px;
   width: auto;
@@ -74,17 +75,84 @@ h1, h2, h3 {
   margin-top: 4px;
 }
 
-.menu-links {
+/* Menu quick actions - visible on all sizes */
+.menu-quick-actions {
   display: flex;
+  gap: 12px;
+  align-items: center;
+}
+
+/* Quick-btn styling */
+.quick-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 8px 10px;
+  border-radius: 8px;
+  background: rgba(255,255,255,0.03);
+  color: var(--text-white);
+  text-decoration: none;
+  font-weight: 700;
+  font-size: 0.8rem;
+  text-align: center;
+}
+
+/* Hamburger / Menu Toggle - styled for mobile */
+.menu-toggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 8px;
+  background: transparent;
+  border: 1px solid rgba(255,255,255,0.04);
+  cursor: pointer;
+  margin-left: 8px;
+  padding: 6px;
+  gap: 3px;
+}
+
+.menu-toggle:focus {
+  outline: 2px solid rgba(212,175,55,0.25);
+  outline-offset: 2px;
+}
+
+/* three bars inside the toggle */
+.menu-toggle .bar {
+  display: block;
+  width: 18px;
+  height: 2px;
+  background: var(--text-white);
+  border-radius: 2px;
+  transition: transform 0.2s ease, opacity 0.2s ease;
+}
+
+/* Collapsible Links Container (desktop and mobile states handled below) */
+.menu-links {
+  display: flex; /* desktop override applied via media queries */
   gap: 16px;
   flex-wrap: wrap;
   justify-content: center;
   align-items: center;
 }
 
+/* Menu right (user info & auth) */
+.menu-right {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+/* Hide elements helper */
+.hidden { display: none !important; }
+
+/* Desktop view - keep original horizontal menu */
 @media (min-width: 768px) {
   .menu-links {
     gap: 20px;
+    display: flex;
   }
   .menu-links a {
     color: var(--text-white);
@@ -96,6 +164,76 @@ h1, h2, h3 {
   .menu-links a:hover {
     color: var(--gold-primary);
   }
+
+  /* Hide the toggle on larger screens (not needed) */
+  .menu-toggle { display: none; }
+}
+
+/* Small screens (mobile) */
+/* - collapse menu-links by default; toggle will add .mobile-active to show it */
+/* - stack links vertically and make them full-width with touch-friendly padding */
+@media (max-width: 767px) {
+  /* keep brand and quick actions compact */
+  .menu {
+    padding: 8px 12px;
+    height: 56px;
+  }
+
+  .menu-quick-actions { display: none; } /* optional: save header space on very small devices */
+
+  /* hide horizontal menu by default */
+  .menu-links {
+    display: none;
+    position: absolute;
+    top: 56px;
+    left: 0;
+    right: 0;
+    background: linear-gradient(180deg, rgba(11,11,11,0.95), rgba(11,11,11,0.97));
+    border-top: 1px solid rgba(255,255,255,0.03);
+    padding: 10px 12px;
+    box-shadow: 0 6px 24px rgba(0,0,0,0.6);
+    z-index: 999;
+    -webkit-backdrop-filter: blur(6px);
+    backdrop-filter: blur(6px);
+    border-bottom-left-radius: 8px;
+    border-bottom-right-radius: 8px;
+    transform-origin: top center;
+    opacity: 0;
+    transform: scaleY(0.95);
+    transition: opacity 180ms ease, transform 180ms ease;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  /* When the JS adds mobile-active, reveal the stacked menu */
+  .menu-links.mobile-active {
+    display: flex;
+    opacity: 1;
+    transform: scaleY(1);
+  }
+
+  .menu-links a {
+    display: block;
+    width: 100%;
+    padding: 10px 14px;
+    border-radius: 8px;
+    color: var(--text-white);
+    text-decoration: none;
+    font-weight: 700;
+    background: rgba(255,255,255,0.02);
+  }
+
+  .menu-links a:hover {
+    background: rgba(212,175,55,0.06);
+    color: var(--gold-primary);
+  }
+
+  /* Make the right-side user area compact in mobile */
+  .menu-right {
+    gap: 6px;
+  }
+
+  .brand-logo-img { height: 34px; }
 }
 
 /* Hero Section */
@@ -119,7 +257,7 @@ h1, h2, h3 {
   height: 100%;
   object-fit: cover;
   z-index: 1;
-  opacity: 0.5; 
+  opacity: 0.5;
 }
 
 .hero-overlay {
@@ -210,7 +348,6 @@ h1, h2, h3 {
   100% { transform: translateX(-150%); }
 }
 
-
 /* Cards & Layout */
 .container {
   max-width: 600px;
@@ -228,6 +365,7 @@ h1, h2, h3 {
   backdrop-filter: blur(8px);
 }
 
+/* Section & Buttons */
 .section-title {
   color: var(--gold-primary);
   font-size: 1.3rem;
@@ -241,7 +379,6 @@ h1, h2, h3 {
   margin-bottom: 16px;
 }
 
-/* Buttons */
 .btn {
   display: inline-flex;
   align-items: center;
@@ -258,9 +395,7 @@ h1, h2, h3 {
   transition: transform 0.2s, box-shadow 0.2s, background 0.3s;
 }
 
-.btn:active {
-  transform: scale(0.98);
-}
+.btn:active { transform: scale(0.98); }
 
 .btn-register {
   background: linear-gradient(135deg, var(--gulder-red-bright) 0%, var(--gulder-red) 100%);
@@ -435,7 +570,7 @@ h1, h2, h3 {
   margin: 4px 0;
 }
 
-/* Restructured Journey Section */
+/* Journey Section */
 .journey-container {
   display: flex;
   flex-direction: column;
@@ -493,458 +628,71 @@ h1, h2, h3 {
   pointer-events: none;
 }
 
+/* Claim box */
 .claim-box {
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 10px;
+  margin-top: 10px;
 }
 
-.spelling-display {
-  font-size: 2.5rem;
-  color: var(--gold-primary);
-  text-shadow: 0 0 8px rgba(212, 175, 55, 0.4);
-}
-
-/* Leaderboard */
-.leaderboard-list {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.lb-item {
-  display: flex;
-  align-items: center;
-  padding: 10px 14px;
-  background: rgba(0, 0, 0, 0.3);
-  border-radius: 8px;
-  border-left: 3px solid #444;
-}
-
-.lb-item.rank-1 { border-left-color: var(--gold-light); background: rgba(212, 175, 55, 0.1); }
-.lb-item.rank-2 { border-left-color: #C0C0C0; }
-.lb-item.rank-3 { border-left-color: #CD7F32; }
-
-.lb-rank {
-  font-weight: 900;
-  width: 24px;
-  color: var(--gold-primary);
-}
-
-.lb-name {
-  flex: 1;
-  font-size: 0.9rem;
-}
-
-.lb-points {
-  font-size: 1.2rem;
-  color: var(--gold-light);
-}
-
-/* Comments Feed */
+/* Comments feed */
 .comments-feed {
   display: flex;
   flex-direction: column;
   gap: 10px;
-  margin-top: 14px;
 }
 
 .comment-card-item {
-  background: rgba(0,0,0,0.3);
-  padding: 10px 12px;
+  background: rgba(0,0,0,0.35);
   border-radius: 8px;
+  padding: 10px;
   border: 1px solid rgba(255,255,255,0.03);
 }
 
 .comment-meta {
   display: flex;
   justify-content: space-between;
-  font-size: 0.75rem;
-  color: var(--gold-primary);
-  margin-bottom: 4px;
+  align-items: center;
+  margin-bottom: 6px;
+  font-weight: 700;
 }
 
-.comment-text {
-  font-size: 0.85rem;
-  color: var(--text-white);
-}
-
-/* Parchment Element */
-.scroll-wrap {
+/* Modals */
+.modal {
+  position: fixed;
+  left: 0;
+  right: 0;
+  top: 0;
+  bottom: 0;
   display: flex;
   align-items: center;
   justify-content: center;
+  background: rgba(0,0,0,0.6);
+  z-index: 2000;
 }
 
-.parchment-body {
-  background: linear-gradient(135deg, #2A1800 0%, #150B00 100%);
-  border: 1px solid var(--gold-dark);
-  padding: 14px;
-  border-radius: 8px;
-  text-align: center;
-  font-size: 0.85rem;
-  color: var(--gold-light);
-}
-
-/* Modal */
-.modal {
-  position: fixed;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  z-index: 1200;
-  width: 90%;
-  max-width: 400px;
-}
+.modal.hidden { display: none; }
 
 .modal-content {
-  background: #141414;
-  border: 1px solid var(--gold-primary);
-  border-radius: 12px;
-  padding: 20px;
-  text-align: center;
-
-  /* ADDED to ensure content scrolls and Close is reachable */
-  max-height: 72vh;
-  overflow: auto;
-  box-sizing: border-box;
-  padding-bottom: 20px;
-}
-
-.modal-backdrop {
-  position: fixed;
-  inset: 0;
-  background: rgba(0,0,0,0.85);
-  z-index: 1100;
-}
-
-.code-box {
-  display: flex;
-  gap: 8px;
-  margin: 14px 0;
-}
-
-button:disabled {
-  cursor: not-allowed !important;
-  opacity: 0.65 !important;
-  background: #222222 !important;
-  border-color: #444444 !important;
-  box-shadow: none !important;
-}
-
-/* Navigation User Profile Styling */
-.menu-right {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-
-.nav-user-details {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-end;
-  text-align: right;
-  line-height: 1.2;
-}
-
-.nav-user-name {
-  font-size: 0.8rem;
-  font-weight: 700;
-  color: var(--gold-light);
-}
-
-.nav-user-phone {
-  font-size: 0.7rem;
-  color: var(--text-muted);
-}
-
-/* -- Comments box styling additions (append to bottom of style.css) -- */
-
-/* Reuse existing comment classes but ensure spacing and alignment for the new section */
-.comment-card-item {
-  background: rgba(0,0,0,0.3);
-  padding: 10px 12px;
-  border-radius: 8px;
-  border: 1px solid rgba(255,255,255,0.03);
-  margin-bottom: 8px;
-}
-
-.comment-meta {
-  display: flex;
-  justify-content: space-between;
-  font-size: 0.75rem;
-  color: var(--gold-primary);
-  margin-bottom: 6px;
-}
-
-.comment-text {
-  font-size: 0.9rem;
-  color: var(--text-white);
-}
-
-/* Online Leaderboard small tweaks */
-#onlineLeaderboardList {
-  font-size: 0.95rem;
-  color: var(--text-white);
-}
-#onlineLeaderboardModal .modal-content {
-  border: 1px solid rgba(212,175,55,0.12);
-}
-
-/* Phone verification box tweaks */
-#phoneVerificationBox { margin-top: 12px; }
-#phoneVerifyForm input { width: 100%; margin-top: 6px; padding: 10px; border-radius: 6px; border: 1px solid rgba(255,255,255,0.06); background: rgba(0,0,0,0.45); color: #fff; }
-#phoneVerifyMsg { font-size: 0.9rem; }
-
-.btn-small {
-  padding: 6px 10px;
-  font-size: 0.85rem;
-  min-height: 34px;
-  width: auto;
-}
-
-/* Base Desktop Styles */
-.menu {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 10px 20px;
-  background-color: #111;
-  position: sticky;
-  top: 0;
-  z-index: 1000;
-}
-
-.menu-brand {
-  display: flex;
-  align-items: center;
-}
-
-.brand-logo-img {
-  height: 40px;
-}
-
-.menu-quick-actions {
-  display: flex;
-  gap: 10px;
-}
-
-.quick-btn {
-  text-align: center;
-  font-size: 0.9rem;
-  padding: 6px 10px;
-  background: rgba(212, 175, 55, 0.15);
-  color: var(--gold-primary, #d4af37);
-  border: 1px solid rgba(212, 175, 55, 0.3);
-  border-radius: 4px;
-  text-decoration: none;
-  font-weight: 600;
-  line-height: 1.2;
-}
-
-.menu-links {
-  display: flex;
-  gap: 15px;
-  align-items: center;
-}
-
-.menu-links a, .menu-quick-actions a {
-  color: #fff;
-  text-decoration: none;
-}
-
-.menu-right {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-
-/* Hide mobile toggle on desktop */
-.menu-toggle {
-  display: none;
-}
-
-/* Responsive Media Query for Mobile Phones (max-width: 768px) */
-@media screen and (max-width: 768px) {
-  .menu {
-    flex-wrap: wrap;
-    padding: 8px 10px;
-  }
-
-  .menu-brand {
-    flex: 0 0 auto;
-  }
-
-  .brand-logo-img {
-    height: 32px;
-  }
-
-  /* Keep Trivia & Leaderboard stacked nicely outside */
-  .menu-quick-actions {
-    display: flex;
-    gap: 6px;
-    margin-left: 8px;
-  }
-
-  .quick-btn {
-    font-size: 0.7rem;
-    padding: 4px 6px;
-  }
-
-  /* Push login/logout and user details tightly into the top row to prevent dropping */
-  .menu-right {
-    margin-left: auto;
-  }
-
-  .btn-login-nav {
-    padding: 4px 10px;
-    font-size: 0.8rem;
-  }
-
-  /* Hamburger Toggle Button Style */
-  .menu-toggle {
-    display: flex;
-    background: none;
-    border: none;
-    cursor: pointer;
-    flex-direction: column;
-    justify-content: space-between;
-    height: 18px;
-    width: 22px;
-    padding: 0;
-    margin-left: 8px;
-  }
-
-  .menu-toggle .bar {
-    display: block;
-    height: 2px;
-    width: 100%;
-    background-color: var(--gold-primary, #d4af37);
-    border-radius: 2px;
-  }
-
-  /* Collapsible Menu Links Dropdown */
-  .menu-links {
-    display: none;
-    flex-direction: column;
-    width: 100%;
-    background-color: #111;
-    border-top: 1px solid rgba(212, 175, 55, 0.2);
-    padding: 5px 0;
-    text-align: center;
-    order: 4; /* Forces it to drop below everything else when expanded */
-  }
-
-  .menu-links.mobile-active {
-    display: flex;
-  }
-
-  .menu-links a {
-    padding: 10px 0;
-    width: 100%;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
-  }
-}
-
-@media (max-width: 768px) {
-  .menu-links {
-    display: none;
-    flex-direction: column;
-    position: absolute;
-    top: 64px;
-    left: 0;
-    width: 100%;
-    background: #000;
-    padding: 15px;
-  }
-  .menu-links.mobile-active {
-    display: flex;
-  }
-}
-
-.menu {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  flex-wrap: nowrap;
-}
-.menu-right {
-  display: flex;
-  align-items: center;
-}
-
-/* 1. Force the toggle button to always show */
-.menu-toggle {
-  display: flex !important; 
-  position: relative; /* Keeps it fixed in its flex container on the menu bar */
-}
-
-/* 2. Force the menu links to be hidden by default on ALL screen sizes (Desktop & Mobile) */
-.menu-links {
-  display: none !important; 
-  position: absolute;
-  top: 100%; /* Pushes the dropdown right below the menu bar */
-  left: 0;
-  width: 100%;
-  background: #111; /* Matches dark theme */
-  flex-direction: column;
-  padding: 15px 0;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.5);
-  z-index: 1000;
-}
-
-/* 3. Style the links inside the dropdown */
-.menu-links a {
-  padding: 15px 20px;
-  text-align: center;
-  border-bottom: 1px solid #333;
-  width: 100%;
-}
-.menu-links a:last-child {
-  border-bottom: none;
-}
-
-/* 4. Show the menu when the toggle is clicked (toggled via JavaScript) */
-.menu-links.mobile-active {
-  display: flex !important;
-}
-
-@media (max-width: 768px) {
-  .menu-links {
-    display: none;
-    flex-direction: column;
-    width: 100%;
-    position: absolute;
-    top: 100%;
-    left: 0;
-    background-color: #000;
-  }
-
-  .menu-links.mobile-active {
-    display: flex !important;
-  }
-}
-
-/* --- mobile menu override: ensure .mobile-active shows and floats above content --- */
-.menu-links.mobile-active {
-  display: flex !important;
-  position: fixed !important;
-  top: 64px !important;            /* places it just below the nav bar */
-  left: 0 !important;
-  width: 100% !important;
-  z-index: 2000 !important;        /* higher than most page elements */
-  max-height: calc(100vh - 64px);
-  overflow-y: auto;
-  flex-direction: column;
   background: #0b0b0b;
-  padding: 10px 0;
-  box-shadow: 0 8px 24px rgba(0,0,0,0.6);
+  border-radius: 10px;
+  padding: 16px;
+  max-width: 95%;
+  width: 640px;
+  box-shadow: 0 10px 40px rgba(0,0,0,0.7);
 }
 
-/* make sure the toggle is always on top too */
-.menu-toggle {
-  z-index: 2100;
+/* Small device adjustments for layout readability */
+@media (max-width: 420px) {
+  .container { padding: 0 10px; }
+  .hero-title { font-size: 1.6rem; }
+  .marquee-content { font-size: 0.82rem; gap: 20px; }
+  .auth-form input, .auth-form select, textarea { padding: 10px; }
+  .menu-links a { font-size: 0.95rem; }
 }
 
-.hidden { display: none !important; }
+/* Utility */
+.text-muted { color: var(--text-muted); }
+.center { text-align: center; }
