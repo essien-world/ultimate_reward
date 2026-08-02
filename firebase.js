@@ -148,18 +148,52 @@ async function redeem({ phone, referral }) {
       const uSnap = await tx.get(userRef);
       if (!uSnap.exists()) throw new Error("User not found");
       const u = uSnap.data();
+
+      // If already has a redeemCode, return existing info (idempotent)
       if (u.redeemCode && u.redeemCode.length > 0) {
         return { already: true, code: u.redeemCode, points: u.points || 0, validReferrals: u.validReferrals || 0 };
       }
-      // generate code and add points
+
+      // generate redeem code and add points to the redeemer
       const code = `GULD-${Math.random().toString(36).slice(2, 8).toUpperCase()}`;
       const addedPoints = 600;
       const newPoints = (u.points || 0) + addedPoints;
 
-      tx.update(userRef, { redeemCode: code, lastRedeemAt: serverTimestamp(), points: newPoints });
+      // Prepare updates for the redeemer
+      const userUpdates = {
+        redeemCode: code,
+        lastRedeemAt: serverTimestamp(),
+        points: newPoints
+      };
 
-      return { already: false, code, points: newPoints, validReferrals: u.validReferrals || 0 };
+      // If this user was referred and we haven't credited that referral yet,
+      // find the referrer and credit them 500 points (and increment validReferrals).
+      let referrerValidReferrals = u.validReferrals || 0;
+      if (u.referredBy && !u.referredByCredited) {
+        // find the referrer by referral code
+        const usersCol = collection(db, "users");
+        const q = query(usersCol, where("referral", "==", u.referredBy), limit(1));
+        const refSnap = await getDocs(q);
+        if (!refSnap.empty) {
+          const refDoc = refSnap.docs[0];
+          const refRef = doc(db, "users", refDoc.id);
+          const refData = refDoc.data();
+          const refNewPoints = (refData.points || 0) + 500;
+          referrerValidReferrals = (refData.validReferrals || 0) + 1;
+
+          // update referrer inside the same transaction
+          tx.update(refRef, { points: refNewPoints, validReferrals: referrerValidReferrals });
+          // mark that the referred user's referrer has been credited
+          userUpdates.referredByCredited = true;
+        }
+      }
+
+      // Update the redeemer
+      tx.update(userRef, userUpdates);
+
+      return { already: false, code, points: newPoints, validReferrals: referrerValidReferrals };
     });
+
     return { success: true, code: result.code, points: result.points, validReferrals: result.validReferrals, already: result.already };
   } catch (err) {
     console.error("redeem error:", err);
