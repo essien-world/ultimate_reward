@@ -4,7 +4,6 @@
 import { getAuth, signOut } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
 import { FAQS } from './faq.js'; 
 
-
 function $(id) { return document.getElementById(id); }
 
 function safeCall(fn) { try { fn(); } catch (e) { console.error(e); } }
