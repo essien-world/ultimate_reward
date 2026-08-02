@@ -195,7 +195,7 @@ function setupMenuHandlers() {
   }
 
   // --- mobile toggle: replace the existing mobileToggle handler with this block ---
-if (mobileToggle && menuLinksContainer) {
+  if (mobileToggle && menuLinksContainer) {
   // set ARIA relationship for accessibility
   mobileToggle.setAttribute('aria-controls', 'menuLinksContainer');
   mobileToggle.setAttribute('aria-expanded', 'false');
@@ -241,3 +241,4 @@ if (document.readyState === 'loading') {
 }
 
 if (typeof window !== 'undefined') window._menuFixes = { populateLeaderboard, populateFaq };
+}
