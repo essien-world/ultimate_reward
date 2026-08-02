@@ -113,12 +113,16 @@ function setupMenuHandlers() {
     });
   }
 
-  if (menuFAQ) {
+    if (menuFAQ) {
     menuFAQ.addEventListener('click', (e) => {
       e && e.preventDefault();
-      const modal = $('faqModal');
+      // Prefer the app's single FAQ modal/flow if it exists
+      if (typeof window.openFaqModal === 'function') {
+        try { window.openFaqModal(); return; } catch (err) { console.error('openFaqModal failed', err); }
+      }
+      // fallback to local populate + open
       populateFaq();
-      openModal(modal);
+      openModal($('faqModal'));
     });
   }
 

@@ -771,11 +771,12 @@ function setupLogout() {
       document.getElementById("tabLogin")?.click();
       document.getElementById("loginForm")?.reset();
 
-      const supportLink = document.getElementById("menuSupport") || document.getElementById("menuSupportBtn");
-      if (supportLink) {
-        supportLink.classList.add("hidden");
-        supportLink.style.display = "";
-      }
+      const mobileToggle = document.getElementById('mobileMenuToggle');
+  if (mobileToggle) {
+    mobileToggle.classList.remove('hidden');
+    // ensure style is visible on mobile even if other code set display:none
+    mobileToggle.style.display = 'flex';
+  }
 
       alert("You have been logged out successfully.");
     });
