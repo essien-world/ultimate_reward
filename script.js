@@ -131,22 +131,35 @@ function removeClutterMenuItems() {
   if (oldComment) oldComment.style.display = "none";
 }
 
-/* --------------------
-   FAQ Modal (collapsible)
-   -------------------- */
+// Replace the existing FAQ handlers with this defer-to-menu-fixes implementation
 function setupMenuFAQHandler() {
   const faqLink = document.getElementById("menuFAQ");
   if (!faqLink) return;
+
   faqLink.addEventListener("click", (e) => {
     e.preventDefault();
-    const modal = document.getElementById("faqModal");
-    if (modal && !modal.classList.contains("hidden")) {
-      modal.classList.add("hidden");
-      return;
+
+    // If menu-fixes exposes populateFaq, use it (new redesigned modal)
+    if (window._menuFixes && typeof window._menuFixes.populateFaq === "function") {
+      try {
+        window._menuFixes.populateFaq();
+        const modal = document.getElementById("faqModal");
+        if (modal) {
+          modal.classList.remove("hidden");
+          modal.setAttribute("aria-hidden", "false");
+        }
+        return;
+      } catch (err) {
+        console.error("menu-fixes populateFaq failed:", err);
+      }
     }
-    openFaqModal();
+
+    // Fallback: simple inline panel (original behavior)
+    alert("FAQ content is not available.");
   });
 }
+
+// Remove/skip the old openFaqModal function if present (we are deferring above).
 
 /* --------------------
    FAQ Modal (collapsible) - replaced to use side panel / bottom sheet (non-blocking)
