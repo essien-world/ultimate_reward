@@ -874,4 +874,40 @@ button:disabled {
   align-items: center;
 }
 
+/* 1. Force the toggle button to always show */
+.menu-toggle {
+  display: flex !important; 
+  position: relative; /* Keeps it fixed in its flex container on the menu bar */
+}
+
+/* 2. Force the menu links to be hidden by default on ALL screen sizes (Desktop & Mobile) */
+.menu-links {
+  display: none !important; 
+  position: absolute;
+  top: 100%; /* Pushes the dropdown right below the menu bar */
+  left: 0;
+  width: 100%;
+  background: #111; /* Matches dark theme */
+  flex-direction: column;
+  padding: 15px 0;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.5);
+  z-index: 1000;
+}
+
+/* 3. Style the links inside the dropdown */
+.menu-links a {
+  padding: 15px 20px;
+  text-align: center;
+  border-bottom: 1px solid #333;
+  width: 100%;
+}
+.menu-links a:last-child {
+  border-bottom: none;
+}
+
+/* 4. Show the menu when the toggle is clicked (toggled via JavaScript) */
+.menu-links.mobile-active {
+  display: flex !important;
+}
+
 .hidden { display: none !important; }
