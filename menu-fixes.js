@@ -8,26 +8,32 @@ function $(id) { return document.getElementById(id); }
 
 function safeCall(fn) { try { fn(); } catch (e) { console.error(e); } }
 
+// Enhanced openModal to force visibility regardless of CSS issues
 function openModal(modalEl) {
   if (!modalEl) return;
   modalEl.classList.remove('hidden');
   modalEl.setAttribute('aria-hidden', 'false');
+  modalEl.style.display = 'flex'; // Force display 
+  modalEl.style.visibility = 'visible';
+  modalEl.style.opacity = '1';
+  modalEl.style.zIndex = '999999'; // Ensure it stays on top
 }
 
+// Enhanced closeModal 
 function closeModal(modalEl) {
   if (!modalEl) return;
   modalEl.classList.add('hidden');
   modalEl.setAttribute('aria-hidden', 'true');
+  modalEl.style.display = 'none'; // Force hide
 }
 
 async function populateLeaderboard() {
   const listEl = $('onlineLeaderboardList');
   const loading = $('onlineLeaderboardLoading');
   if (!listEl) return;
-  if (loading) loading.textContent = 'Loading leaderboard';
+  if (loading) loading.textContent = 'Loading leaderboard...';
   listEl.innerHTML = '';
 
-  // Prefer firebase helper if available
   if (typeof window.getLeaderboard === 'function') {
     try {
       const res = await window.getLeaderboard();
@@ -50,7 +56,6 @@ async function populateLeaderboard() {
     }
   }
 
-  // fallback: show message
   listEl.innerHTML = '<div style="color:var(--text-muted); padding:12px; text-align:center;">Unable to load leaderboard. Please try again later.</div>';
 }
 
@@ -68,21 +73,29 @@ function populateFaq() {
   const faqList = $('faqList');
   if (!faqList) return;
   
-  // FIXED: Check both the module import and the global window attachment
-  const faqData = (typeof FAQS !== 'undefined' && FAQS.length > 0) ? FAQS : window.FAQS;
-  
-  if (!faqData || faqData.length === 0) {
-    faqList.innerHTML = '<div style="color:var(--text-muted); padding:12px;">FAQ data not available</div>';
-    return;
+  try {
+    // Check both the module import and the global window attachment safely
+    const faqData = (typeof FAQS !== 'undefined' && FAQS && FAQS.length > 0) ? FAQS : (window.FAQS || []);
+    
+    if (!faqData || faqData.length === 0) {
+      faqList.innerHTML = '<div style="color:var(--text-muted); padding:12px;">FAQ data not available. Please refresh.</div>';
+      return;
+    }
+    
+    faqList.innerHTML = '';
+    faqData.forEach((f) => {
+      const item = document.createElement('div');
+      item.style.marginBottom = '10px';
+      item.innerHTML = `<details style="background:rgba(0,0,0,0.35); padding:10px; border-radius:6px; margin-bottom:6px;">
+        <summary style="color:var(--gold-primary); font-weight:700; cursor:pointer;">${escapeHtml(f.question)}</summary>
+        <div style="margin-top:8px; color:var(--text-muted); line-height: 1.5;">${escapeHtml(f.answer)}</div>
+      </details>`;
+      faqList.appendChild(item);
+    });
+  } catch (err) {
+    console.error('populateFaq error:', err);
+    faqList.innerHTML = '<div style="color:var(--text-muted); padding:12px;">Error loading FAQ.</div>';
   }
-  
-  faqList.innerHTML = '';
-  faqData.forEach((f) => {
-    const item = document.createElement('div');
-    item.style.marginBottom = '10px';
-    item.innerHTML = `<details style="background:rgba(0,0,0,0.35); padding:10px; border-radius:6px; margin-bottom:6px;"><summary style="color:var(--gold-primary); font-weight:700; cursor:pointer;">${escapeHtml(f.question)}</summary><div style="margin-top:8px; color:var(--text-muted);">${escapeHtml(f.answer)}</div></details>`;
-    faqList.appendChild(item);
-  });
 }
 
 function setupMenuHandlers() {
@@ -111,46 +124,34 @@ function setupMenuHandlers() {
 
   if (menuLeaderboard) {
     menuLeaderboard.addEventListener('click', async (e) => {
-      e && e.preventDefault();
+      if (e) { e.preventDefault(); e.stopPropagation(); }
       const modal = $('onlineLeaderboardModal');
       openModal(modal);
       await populateLeaderboard();
     });
   }
 
+  // --- FAQ BUTTON FIX ---
   if (menuFAQ) {
     menuFAQ.addEventListener('click', (e) => {
-      e && e.preventDefault();
+      if (e) { 
+        e.preventDefault(); 
+        e.stopPropagation(); // Stops mobile menus from instantly swallowing the click
+      }
       populateFaq();
       openModal($('faqModal'));
     });
   }
 
-  // Ensure Support link exists and is visible to everyone
   let supportLink = document.getElementById("menuSupport") || document.getElementById("menuSupportBtn");
-  if (!supportLink) {
-    supportLink = document.createElement("a");
-    supportLink.href = "#";
-    supportLink.id = "menuSupport";
-    supportLink.textContent = "Support";
-    const menuLinks = document.querySelector(".menu-links");
-    if (menuLinks) menuLinks.appendChild(supportLink);
-  } else {
-    supportLink.style.display = "inline-block";
-  }
-
   if (supportLink) {
     supportLink.addEventListener('click', (e) => {
-      e && e.preventDefault();
+      if (e) { e.preventDefault(); e.stopPropagation(); }
       const modal = $('supportModal');
       if (typeof window.openSupportModal === 'function') {
         window.openSupportModal();
-      } else {
-        if (modal) {
-          modal.classList.remove('hidden');
-        } else if (typeof window.openSupportModal === 'undefined') {
-          try { supportLink.click(); } catch (err) { /* no-op */ }
-        }
+      } else if (modal) {
+        openModal(modal);
       }
     });
   }
@@ -196,7 +197,6 @@ function setupMenuHandlers() {
     });
   }
 
-  // FIXED: Mobile Hamburger Menu Toggle now inside the initializer safely
   const mobileToggle = $('mobileMenuToggle');
   const menuLinksContainer = $('menuLinksContainer');
   
@@ -206,7 +206,6 @@ function setupMenuHandlers() {
       menuLinksContainer.classList.toggle('mobile-active');
     });
 
-    // Close dropdown menu automatically when a link inside it is tapped
     menuLinksContainer.querySelectorAll('a').forEach(link => {
       link.addEventListener('click', () => {
         menuLinksContainer.classList.remove('mobile-active');
@@ -222,5 +221,4 @@ if (document.readyState === 'loading') {
   setupMenuHandlers();
 }
 
-// expose for debugging
 if (typeof window !== 'undefined') window._menuFixes = { populateLeaderboard, populateFaq };
