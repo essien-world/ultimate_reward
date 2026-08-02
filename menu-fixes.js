@@ -10,7 +10,7 @@ function openModal(modalEl) {
   if (!modalEl) return;
 
   // If this is the FAQ panel, show as a slide-in panel instead of full-screen modal
-  if (modalEl.classList.contains('faq-panel')) {
+  if (modalEl.classList && modalEl.classList.contains && modalEl.classList.contains('faq-panel')) {
     modalEl.classList.remove('hidden');
     modalEl.setAttribute('aria-hidden', 'false');
     modalEl.style.display = 'block';
@@ -35,7 +35,7 @@ function openModal(modalEl) {
 function closeModal(modalEl) {
   if (!modalEl) return;
 
-  if (modalEl.classList.contains('faq-panel')) {
+  if (modalEl.classList && modalEl.classList.contains && modalEl.classList.contains('faq-panel')) {
     modalEl.classList.add('hidden');
     modalEl.setAttribute('aria-hidden', 'true');
     modalEl.style.display = 'none';
@@ -65,27 +65,36 @@ function escapeHtml(str) {
     .replace(/>/g, '&gt;');
 }
 
-/* Populate the FAQ into a non-blocking side panel (faq-panel) */
+/* Populate the FAQ into a modal styled same as Online Leaderboard (full-screen .modal) */
 function populateFaq() {
   try {
     let modal = $('faqModal');
-    // If no panel exists, create a lightweight side panel
+
+    // If modal doesn't exist, create a regular .modal (not the slide-in panel)
     if (!modal) {
       modal = document.createElement('div');
       modal.id = 'faqModal';
-      modal.className = 'faq-panel hidden';
+      modal.className = 'modal hidden';
       modal.setAttribute('aria-hidden', 'true');
 
-      // content container
       const inner = document.createElement('div');
-      inner.className = 'faq-panel-content';
-      inner.innerHTML = `<div class="faq-panel-header" style="display:flex; justify-content:space-between; align-items:center;">
-        <h3 style="color:var(--gold-primary); margin:0;">Frequently Asked Questions</h3>
-        <div style="display:flex; gap:8px; align-items:center;">
-          <button id="closeFaqBtn" class="btn btn-dark" style="padding:8px 10px;">Close</button>
+      inner.className = 'modal-content';
+      inner.style.maxHeight = '70vh';
+      inner.style.overflow = 'hidden';
+      inner.style.padding = '18px';
+
+      inner.innerHTML = `
+        <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:12px;">
+          <div>
+            <h3 style="color:var(--gold-primary); margin:0 0 6px 0;">Frequently Asked Questions</h3>
+            <p style="color:var(--text-muted); font-size:0.9rem; margin:0 0 12px 0;">Tap any question to expand its answer.</p>
+          </div>
+          <div style="display:flex; gap:8px; align-items:center;">
+            <button id="closeFaqBtn" class="btn btn-dark" style="padding:8px 10px;">Close</button>
+          </div>
         </div>
-      </div>
-      <div id="faqList" style="text-align:left; margin-top:12px; display:flex; flex-direction:column; gap:8px;"></div>`;
+        <div id="faqList" style="text-align:left; margin-top:12px; max-height:58vh; overflow:auto; display:flex; flex-direction:column; gap:8px;"></div>
+      `;
 
       modal.appendChild(inner);
       document.body.appendChild(modal);
@@ -137,21 +146,8 @@ function populateFaq() {
       faqList.appendChild(details);
     });
 
+    // wire the close button
     let modalClose = $('closeFaqBtn');
-    if (!modalClose) {
-      // create a fallback close button inside the panel-content header if not found
-      const header = modal.querySelector('.faq-panel-header');
-      if (header) {
-        const btn = document.createElement('button');
-        btn.id = 'closeFaqBtn';
-        btn.className = 'btn btn-dark';
-        btn.textContent = 'Close';
-        btn.style.padding = '8px 10px';
-        header.appendChild(btn);
-        modalClose = btn;
-      }
-    }
-
     if (modalClose) {
       modalClose.removeEventListener('click', modalClose._handler || (() => {}));
       modalClose._handler = () => closeModal($('faqModal'));
