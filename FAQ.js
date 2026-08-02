@@ -23,7 +23,7 @@ const FAQS = [
   {
     question: "How do I earn points?",
     answer:
-      "You earn points by playing trivia games by answering questions correctly (each correct answer = 100 points),, referring friends with your referral code (each valid referral = 500 points), and participating in eligible promotional activities."
+      "You earn points by playing trivia games by answering questions correctly (each correct answer = 100 points), referring friends with your referral code (each valid referral = 500 points), and participating in eligible promotional activities."
   },
 
   {

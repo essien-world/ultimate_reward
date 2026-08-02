@@ -113,7 +113,15 @@ function setupMenuHandlers() {
       e.preventDefault();
       safeCall(() => document.getElementById('heroSection').scrollIntoView({ behavior: 'smooth' }));
     });
-  }
+
+    // Select all buttons with the 'hidden' class inside the menu navigation
+const hiddenMenuButtons = document.querySelectorAll('.menu button.hidden');
+
+// Loop through the NodeList and disable each button
+hiddenMenuButtons.forEach(button => {
+  button.disabled = true;
+});
+}
 
   if (menuGame) {
     menuGame.addEventListener('click', (e) => {
