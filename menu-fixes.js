@@ -1,6 +1,4 @@
-// menu-fixes.js — small module to wire up menu buttons and modals
-// This file adds behavior for menu items that were not wired in the main script.
-
+// menu-fixes.js — corrected version
 import { getAuth, signOut } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
 import { FAQS } from './faq.js'; 
 
@@ -8,23 +6,21 @@ function $(id) { return document.getElementById(id); }
 
 function safeCall(fn) { try { fn(); } catch (e) { console.error(e); } }
 
-// Enhanced openModal to force visibility regardless of CSS issues
 function openModal(modalEl) {
   if (!modalEl) return;
   modalEl.classList.remove('hidden');
   modalEl.setAttribute('aria-hidden', 'false');
-  modalEl.style.display = 'flex'; // Force display 
+  modalEl.style.display = 'flex'; 
   modalEl.style.visibility = 'visible';
   modalEl.style.opacity = '1';
-  modalEl.style.zIndex = '999999'; // Ensure it stays on top
+  modalEl.style.zIndex = '999999';
 }
 
-// Enhanced closeModal 
 function closeModal(modalEl) {
   if (!modalEl) return;
   modalEl.classList.add('hidden');
   modalEl.setAttribute('aria-hidden', 'true');
-  modalEl.style.display = 'none'; // Force hide
+  modalEl.style.display = 'none';
 }
 
 async function populateLeaderboard() {
@@ -74,7 +70,6 @@ function populateFaq() {
   if (!faqList) return;
   
   try {
-    // Check both the module import and the global window attachment safely
     const faqData = (typeof FAQS !== 'undefined' && FAQS && FAQS.length > 0) ? FAQS : (window.FAQS || []);
     
     if (!faqData || faqData.length === 0) {
@@ -99,7 +94,7 @@ function populateFaq() {
 }
 
 function setupMenuHandlers() {
-  // prevent default for anchors with href="#"
+  // Prevent default jump for anchor links with "#"
   document.querySelectorAll('a[href="#"]').forEach(a => a.addEventListener('click', (e) => e.preventDefault()));
 
   const menuHome = $('menuHome');
@@ -113,15 +108,13 @@ function setupMenuHandlers() {
       e.preventDefault();
       safeCall(() => document.getElementById('heroSection').scrollIntoView({ behavior: 'smooth' }));
     });
+  }
 
-    // Select all buttons with the 'hidden' class inside the menu navigation
-const hiddenMenuButtons = document.querySelectorAll('.menu button.hidden');
-
-// Loop through the NodeList and disable each button
-hiddenMenuButtons.forEach(button => {
-  button.disabled = true;
-});
-}
+  // Disable hidden buttons inside menu navigation
+  const hiddenMenuButtons = document.querySelectorAll('.menu button.hidden');
+  hiddenMenuButtons.forEach(button => {
+    button.disabled = true;
+  });
 
   if (menuGame) {
     menuGame.addEventListener('click', (e) => {
@@ -139,13 +132,9 @@ hiddenMenuButtons.forEach(button => {
     });
   }
 
-  // --- FAQ BUTTON FIX ---
   if (menuFAQ) {
     menuFAQ.addEventListener('click', (e) => {
-      if (e) { 
-        e.preventDefault(); 
-        e.stopPropagation(); // Stops mobile menus from instantly swallowing the click
-      }
+      if (e) { e.preventDefault(); e.stopPropagation(); }
       populateFaq();
       openModal($('faqModal'));
     });
@@ -164,7 +153,7 @@ hiddenMenuButtons.forEach(button => {
     });
   }
 
-  // Close buttons
+  // Close Modal Handlers
   const closeLeaderboardBtn = $('closeLeaderboardBtn');
   if (closeLeaderboardBtn) closeLeaderboardBtn.addEventListener('click', () => closeModal($('onlineLeaderboardModal')));
 
@@ -174,7 +163,7 @@ hiddenMenuButtons.forEach(button => {
   const closeSupportBtn = $('closeSupportBtn');
   if (closeSupportBtn) closeSupportBtn.addEventListener('click', () => closeModal($('supportModal')));
 
-  // nav login/logout
+  // Auth Buttons
   const navLoginBtn = $('navLoginBtn');
   const navLogoutBtn = $('navLogoutBtn');
   
@@ -205,6 +194,7 @@ hiddenMenuButtons.forEach(button => {
     });
   }
 
+  // Mobile Menu Toggle Event Listener
   const mobileToggle = $('mobileMenuToggle');
   const menuLinksContainer = $('menuLinksContainer');
   
@@ -214,6 +204,7 @@ hiddenMenuButtons.forEach(button => {
       menuLinksContainer.classList.toggle('mobile-active');
     });
 
+    // Close menu upon clicking any link inside container
     menuLinksContainer.querySelectorAll('a').forEach(link => {
       link.addEventListener('click', () => {
         menuLinksContainer.classList.remove('mobile-active');
@@ -222,7 +213,7 @@ hiddenMenuButtons.forEach(button => {
   }
 }
 
-// Wire up when DOM ready
+// Attach DOM Event Listeners
 if (document.readyState === 'loading') {
   document.addEventListener('DOMContentLoaded', setupMenuHandlers);
 } else {
