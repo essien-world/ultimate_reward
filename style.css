@@ -926,4 +926,25 @@ button:disabled {
   }
 }
 
+/* --- mobile menu override: ensure .mobile-active shows and floats above content --- */
+.menu-links.mobile-active {
+  display: flex !important;
+  position: fixed !important;
+  top: 64px !important;            /* places it just below the nav bar */
+  left: 0 !important;
+  width: 100% !important;
+  z-index: 2000 !important;        /* higher than most page elements */
+  max-height: calc(100vh - 64px);
+  overflow-y: auto;
+  flex-direction: column;
+  background: #0b0b0b;
+  padding: 10px 0;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.6);
+}
+
+/* make sure the toggle is always on top too */
+.menu-toggle {
+  z-index: 2100;
+}
+
 .hidden { display: none !important; }

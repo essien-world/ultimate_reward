@@ -194,23 +194,43 @@ function setupMenuHandlers() {
     });
   }
 
-  // Mobile Menu Toggle Event Listener
-  const mobileToggle = $('mobileMenuToggle');
-  const menuLinksContainer = $('menuLinksContainer');
-  
-  if (mobileToggle && menuLinksContainer) {
-    mobileToggle.addEventListener('click', (e) => {
-      e.stopPropagation();
-      menuLinksContainer.classList.toggle('mobile-active');
-    });
+  // --- mobile toggle: replace the existing mobileToggle handler with this block ---
+if (mobileToggle && menuLinksContainer) {
+  // set ARIA relationship for accessibility
+  mobileToggle.setAttribute('aria-controls', 'menuLinksContainer');
+  mobileToggle.setAttribute('aria-expanded', 'false');
 
-    // Close menu upon clicking any link inside container
-    menuLinksContainer.querySelectorAll('a').forEach(link => {
-      link.addEventListener('click', () => {
-        menuLinksContainer.classList.remove('mobile-active');
-      });
+  mobileToggle.addEventListener('click', (e) => {
+    e.stopPropagation();
+    const opened = menuLinksContainer.classList.toggle('mobile-active');
+    // update ARIA
+    mobileToggle.setAttribute('aria-expanded', String(!!opened));
+  });
+
+  // Close the menu when clicking anywhere outside the menu or toggle
+  document.addEventListener('click', (e) => {
+    if (!menuLinksContainer.classList.contains('mobile-active')) return;
+    if (!menuLinksContainer.contains(e.target) && !mobileToggle.contains(e.target)) {
+      menuLinksContainer.classList.remove('mobile-active');
+      mobileToggle.setAttribute('aria-expanded', 'false');
+    }
+  });
+
+  // Also close on Escape key
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && menuLinksContainer.classList.contains('mobile-active')) {
+      menuLinksContainer.classList.remove('mobile-active');
+      mobileToggle.setAttribute('aria-expanded', 'false');
+    }
+  });
+
+  // keep existing behavior that closes menu when any link inside is clicked
+  menuLinksContainer.querySelectorAll('a').forEach(link => {
+    link.addEventListener('click', () => {
+      menuLinksContainer.classList.remove('mobile-active');
+      mobileToggle.setAttribute('aria-expanded', 'false');
     });
-  }
+  });
 }
 
 // Attach DOM Event Listeners
