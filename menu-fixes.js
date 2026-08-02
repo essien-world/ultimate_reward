@@ -95,6 +95,8 @@ function populateFaq() {
 
 function setupMenuHandlers() {
   // Prevent default jump for anchor links with "#"
+  const mobileToggle = document.getElementById("mobileMenuToggle");
+  const menuLinksContainer = document.getElementById("menuLinksContainer");
   document.querySelectorAll('a[href="#"]').forEach(a => a.addEventListener('click', (e) => e.preventDefault()));
 
   const menuHome = $('menuHome');
