@@ -122,11 +122,37 @@ function setupMenuHandlers() {
     });
   }
 
-  if (menuSupportBtn) {
-    menuSupportBtn.addEventListener('click', (e) => {
+  // Ensure Support link exists and is visible to everyone
+  let supportLink = document.getElementById("menuSupport") || document.getElementById("menuSupportBtn");
+  if (!supportLink) {
+    supportLink = document.createElement("a");
+    supportLink.href = "#";
+    supportLink.id = "menuSupport";
+    supportLink.textContent = "Support";
+    // visible to all users (no hidden state)
+    const menuLinks = document.querySelector(".menu-links");
+    if (menuLinks) menuLinks.appendChild(supportLink);
+  } else {
+    // ensure it's shown
+    supportLink.style.display = "inline-block";
+  }
+
+  if (supportLink) {
+    supportLink.addEventListener('click', (e) => {
       e && e.preventDefault();
       const modal = $('supportModal');
-      openModal(modal);
+      // open support modal via existing global function if present, otherwise fallback
+      if (typeof window.openSupportModal === 'function') {
+        window.openSupportModal();
+      } else {
+        // populate and open the support modal in-place if not handled elsewhere
+        if (modal) {
+          modal.classList.remove('hidden');
+        } else if (typeof window.openSupportModal === 'undefined') {
+          // If the main script's openSupportModal is not exposed, try invoking it via click on menu Support (main script attaches handler)
+          try { supportLink.click(); } catch (err) { /* no-op */ }
+        }
+      }
     });
   }
 

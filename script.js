@@ -118,7 +118,7 @@ function injectImportantNotice() {
   notice.style.color = "#ffefc6";
   notice.style.fontSize = "0.9rem";
   notice.style.lineHeight = "1.3";
-  notice.textContent = "Important Notice: Reaching 10,000 points does not guarantee immediate reward payment. Every qualifying account undergoes a verification process. All referred phone numbers will be verified via SMS to confirm they belong to genuine individuals. Rewards are released only after successful verification and compliance with the platform's rules. This policy helps maintain fairness and prevent fraudulent referrals.";
+  notice.textContent = "Important Notice: Reaching 10,000 points does not guarantee immediate reward payment. Every qualifying account undergoes a verification process. All referred phone numbers will be verified via SMS OTP to confirm they belong to genuine individuals. Rewards are released only after successful verification and compliance with the platform's rules. This policy helps maintain fairness and prevent fraudulent referrals.";
   heroCta.parentNode.insertBefore(notice, heroCta.nextSibling);
 }
 
@@ -225,36 +225,38 @@ function openFaqModal() {
 }
 
 /* --------------------
-   Support Menu
+   Support Menu (updated to allow anonymous access)
    -------------------- */
 function setupSupportMenu() {
   const menuLinks = document.querySelector(".menu-links");
   if (!menuLinks) return;
 
+  // Show a Support link for everyone (logged-in or not)
   let supportLink = document.getElementById("menuSupport") || document.getElementById("menuSupportBtn");
   if (!supportLink) {
     supportLink = document.createElement("a");
     supportLink.href = "#";
     supportLink.id = "menuSupport";
     supportLink.textContent = "Support";
-    supportLink.style.display = "none";
+    supportLink.style.display = "inline-block"; // visible to everyone
     menuLinks.appendChild(supportLink);
+  } else {
+    supportLink.style.display = "inline-block";
   }
 
   supportLink.addEventListener("click", (e) => {
     e.preventDefault();
-    if (!currentUser) {
-      alert("Please login to access support.");
-      return;
-    }
     openSupportModal();
   });
 
+  // If there is an existing submit button in DOM (unlikely before modal creation),
+  // attach a listener defensively (openSupportModal will still attach)
   const submitBtn = document.getElementById("submitSupportBtn");
   if (submitBtn && !submitBtn._supportListenerAdded) {
     submitBtn.addEventListener("click", submitSupportMessage);
     submitBtn._supportListenerAdded = true;
   }
+
   const closeBtn = document.getElementById("closeSupportBtn");
   if (closeBtn && !closeBtn._supportCloseAdded) {
     closeBtn.addEventListener("click", () => {
@@ -279,9 +281,20 @@ function openSupportModal() {
     inner.innerHTML = `
       <h3 style="color:#d4af37; margin-bottom:8px;">Contact Support</h3>
       <p style="color:var(--text-muted); font-size:0.9rem; margin-bottom:12px;">Describe the issue and our team will get back to you.</p>
+
+      <!-- Name & Phone fields (optional for anonymous users) -->
+      <label style="display:block; margin-bottom:8px;"><strong>Your Name (optional)</strong>
+        <input id="supportNameInput" type="text" style="width:100%; margin-top:6px; padding:8px; border-radius:6px; background:rgba(0,0,0,0.45); color:#fff; border:1px solid rgba(255,255,255,0.06);" />
+      </label>
+
+      <label style="display:block; margin-bottom:8px;"><strong>Phone (optional)</strong>
+        <input id="supportPhoneInput" type="tel" style="width:100%; margin-top:6px; padding:8px; border-radius:6px; background:rgba(0,0,0,0.45); color:#fff; border:1px solid rgba(255,255,255,0.06);" />
+      </label>
+
       <label style="display:block; margin-bottom:8px;"><strong>Message</strong>
         <textarea id="supportMessageInput" rows="6" style="width:100%; padding:10px; border-radius:6px; background:rgba(0,0,0,0.45); color:#fff; border:1px solid rgba(255,255,255,0.06);"></textarea>
       </label>
+
       <div style="display:flex; gap:8px;">
         <button id="submitSupportBtn" class="btn btn-register" style="flex:1;">Submit</button>
         <button id="closeSupportBtn" class="btn btn-dark">Close</button>
@@ -292,22 +305,20 @@ function openSupportModal() {
     modal.appendChild(inner);
     document.body.appendChild(modal);
 
+    // attach close & submit listeners
     document.getElementById("closeSupportBtn").addEventListener("click", () => modal.classList.add("hidden"));
     document.getElementById("submitSupportBtn").addEventListener("click", submitSupportMessage);
   }
 
-  const submit = document.getElementById("submitSupportBtn");
-  if (submit && !submit._supportListenerAdded) {
-    submit.addEventListener("click", submitSupportMessage);
-    submit._supportListenerAdded = true;
-  }
-  const close = document.getElementById("closeSupportBtn");
-  if (close && !close._supportCloseAdded) {
-    close.addEventListener("click", () => {
-      const mm = document.getElementById("supportModal");
-      if (mm) mm.classList.add("hidden");
-    });
-    close._supportCloseAdded = true;
+  // Pre-fill fields when logged in
+  const nameEl = document.getElementById("supportNameInput");
+  const phoneEl = document.getElementById("supportPhoneInput");
+  if (currentUser) {
+    if (nameEl) { nameEl.value = currentUser.name || ""; nameEl.disabled = true; }
+    if (phoneEl) { phoneEl.value = currentUser.phone || ""; phoneEl.disabled = true; }
+  } else {
+    if (nameEl) { nameEl.value = ""; nameEl.disabled = false; }
+    if (phoneEl) { phoneEl.value = ""; phoneEl.disabled = false; }
   }
 
   modal.classList.remove("hidden");
@@ -315,12 +326,12 @@ function openSupportModal() {
 
 async function submitSupportMessage() {
   if (!ensureOnline()) return;
-  if (!currentUser) {
-    alert("Please login first.");
-    return;
-  }
+
   const input = document.getElementById("supportMessageInput");
+  const nameEl = document.getElementById("supportNameInput");
+  const phoneEl = document.getElementById("supportPhoneInput");
   const msgDiv = document.getElementById("supportStatus");
+
   if (!input) {
     alert("Support input not found.");
     return;
@@ -331,27 +342,37 @@ async function submitSupportMessage() {
     return;
   }
 
+  // allow anonymous name/phone if not logged in; prefer currentUser values when present
+  const name = (currentUser && currentUser.name) ? currentUser.name : ((nameEl && nameEl.value) ? nameEl.value.trim() : "");
+  const phone = (currentUser && currentUser.phone) ? currentUser.phone : ((phoneEl && phoneEl.value) ? phoneEl.value.trim() : "");
+
   const btn = document.getElementById("submitSupportBtn");
   btn.disabled = true;
   btn.textContent = "Submitting...";
 
   try {
+    // reuse submitComment endpoint (keeps support messages in comments collection)
     const res = await apiCall({
       action: "submitComment",
-      phone: currentUser.phone,
-      name: currentUser.name || "Support User",
+      phone: phone || "",
+      name: name || "Anonymous",
       comment: `[SUPPORT] ${message}`
     });
 
     if (res && res.success) {
-      msgDiv.textContent = "Support message submitted. We'll get back to you.";
+      if (msgDiv) msgDiv.textContent = "Support message submitted. We'll get back to you.";
       input.value = "";
+      if (!currentUser) {
+        // clear anonymous fields too
+        if (nameEl) nameEl.value = "";
+        if (phoneEl) phoneEl.value = "";
+      }
       setTimeout(() => {
         const modal = document.getElementById("supportModal");
         if (modal) modal.classList.add("hidden");
-      }, 600);
+      }, 800);
     } else {
-      msgDiv.textContent = "Failed to submit. Please try again later.";
+      if (msgDiv) msgDiv.textContent = "Failed to submit. Please try again later.";
       console.error("Support submit failed", res);
       alert(res && res.message ? res.message : "Failed to send support message.");
     }
@@ -621,7 +642,7 @@ function setupTabs() {
   if (navLoginBtn && tabLog) {
     navLoginBtn.addEventListener("click", () => {
       tabLog.click();
-      document.getElementById("authSection")?.scrollIntoView({ behavior: "smooth" });
+      document.getElementById("authSection")?.scrollIntoView({ behavior: 'smooth' });
     });
   }
 }
@@ -721,6 +742,10 @@ function updateLoginUI() {
     supportLink.classList.remove("hidden");
     supportLink.style.display = "inline-block";
   }
+
+  // ensure mobile hamburger toggle remains visible when logged in (mobile)
+  const mobileToggle = document.getElementById('mobileMenuToggle');
+  if (mobileToggle) mobileToggle.classList.remove('hidden');
 }
 
 function setupLogout() {
@@ -1681,4 +1706,3 @@ if (typeof window !== "undefined")
   window.setPhoneVerified = window.setPhoneVerified || setPhoneVerified;
   window.checkReferrerPoints = window.checkReferrerPoints || checkReferrerPoints;
 }
-
