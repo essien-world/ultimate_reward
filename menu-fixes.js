@@ -2,6 +2,8 @@
 // This file adds behavior for menu items that were not wired in the main script.
 
 import { getAuth, signOut } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+import { FAQS } from './faq.js'; // Add this line
+import { getAuth, signOut } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
 
 function $(id) { return document.getElementById(id); }
 
@@ -66,13 +68,15 @@ function escapeHtml(str) {
 function populateFaq() {
   const faqList = $('faqList');
   if (!faqList) return;
-  const faqs = (typeof window.FAQS !== 'undefined') ? window.FAQS : (typeof window.FAQS !== 'undefined' ? window.FAQS : null);
-  if (!faqs) {
+  
+  // Directly use the imported FAQS array
+  if (!FAQS || FAQS.length === 0) {
     faqList.innerHTML = '<div style="color:var(--text-muted); padding:12px;">FAQ data not available</div>';
     return;
   }
+  
   faqList.innerHTML = '';
-  faqs.forEach((f) => {
+  FAQS.forEach((f) => {
     const item = document.createElement('div');
     item.style.marginBottom = '10px';
     item.innerHTML = `<details style="background:rgba(0,0,0,0.35); padding:10px; border-radius:6px; margin-bottom:6px;"><summary style="color:var(--gold-primary); font-weight:700; cursor:pointer;">${escapeHtml(f.question)}</summary><div style="margin-top:8px; color:var(--text-muted);">${escapeHtml(f.answer)}</div></details>`;
@@ -116,11 +120,7 @@ function setupMenuHandlers() {
     if (menuFAQ) {
     menuFAQ.addEventListener('click', (e) => {
       e && e.preventDefault();
-      // Prefer the app's single FAQ modal/flow if it exists
-      if (typeof window.openFaqModal === 'function') {
-        try { window.openFaqModal(); return; } catch (err) { console.error('openFaqModal failed', err); }
-      }
-      // fallback to local populate + open
+      // Bypass any legacy global functions and force our local data and modal to run
       populateFaq();
       openModal($('faqModal'));
     });
