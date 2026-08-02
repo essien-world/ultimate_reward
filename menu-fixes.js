@@ -127,8 +127,10 @@ function populateFaq() {
       modalClose.textContent = 'Close';
       modalClose.style.width = '100%';
       // Append at the end of modal-content
-      modalContent.appendChild(document.createElement('div')).style.marginTop = '12px';
-      modalContent.appendChild(modalClose);
+      const wrapper = document.createElement('div');
+      wrapper.style.marginTop = '12px';
+      wrapper.appendChild(modalClose);
+      modalContent.appendChild(wrapper);
     }
     modalClose.removeEventListener('click', modalClose._handler || (() => {}));
     modalClose._handler = () => closeModal(modal);
@@ -167,9 +169,12 @@ function setupMenuHandlers() {
     });
   }
 
+  // FAQ Handler - FIXED: Remove duplicate listener and ensure proper event handling
   if (menuFAQ) {
     menuFAQ.addEventListener('click', (e) => {
-      if (e) { e.preventDefault(); e.stopPropagation(); }
+      e.preventDefault();
+      e.stopPropagation();
+      console.log("FAQ button clicked from menu-fixes.js");
       populateFaq();
       openModal($('faqModal'));
     });
@@ -266,6 +271,6 @@ if (document.readyState === 'loading') {
   setupMenuHandlers();
 }
 
-if (typeof window !== 'undefined') {
+if (typeof window !== "undefined") {
   window._menuFixes = { populateFaq, populateLeaderboard };
 }
