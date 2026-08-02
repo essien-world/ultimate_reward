@@ -1,6 +1,4 @@
-// menu-fixes.js — FAQ improvements: close-control at end of each expanded answer.
-// Also safe handling when leaderboard/menu links are missing.
-// Note: importing FAQS from FAQ.js (case-sensitive).
+// menu-fixes.js — FAQ improvements & modal display fix
 import { getAuth, signOut } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
 import { FAQS } from "./faq.js";
 
@@ -11,7 +9,7 @@ function openModal(modalEl) {
   if (!modalEl) return;
   modalEl.classList.remove('hidden');
   modalEl.setAttribute('aria-hidden', 'false');
-  modalEl.style.display = 'flex';
+  modalEl.style.setProperty('display', 'flex', 'important');
   modalEl.style.visibility = 'visible';
   modalEl.style.opacity = '1';
   modalEl.style.zIndex = '999999';
@@ -21,14 +19,13 @@ function closeModal(modalEl) {
   if (!modalEl) return;
   modalEl.classList.add('hidden');
   modalEl.setAttribute('aria-hidden', 'true');
-  modalEl.style.display = 'none';
+  modalEl.style.setProperty('display', 'none', 'important');
 }
 
 async function populateLeaderboard() {
   const listEl = $('onlineLeaderboardList');
   if (!listEl) return;
-  listEl.innerHTML = '<div style="color:var(--text-muted); padding:12px; text-align:center;">Unable to load leaderboard (menu link removed).</div>';
-  // The leaderboard is intentionally not exposed from the menu; keep function for manual use.
+  listEl.innerHTML = '<div style="color:var(--text-muted); padding:12px; text-align:center;">Unable to load leaderboard.</div>';
 }
 
 function escapeHtml(str) {
@@ -41,23 +38,15 @@ function escapeHtml(str) {
     .replace(/>/g, '&gt;');
 }
 
-/*
-  Improved FAQ population:
-  - Uses the modal already present in the DOM (#faqModal).
-  - Renders <details> elements for each FAQ.
-  - Adds a "Close" button at the end of each expanded answer to collapse that item.
-  - Ensures a modal-level Close button exists (at the end) to dismiss the modal.
-*/
 function populateFaq() {
   try {
     const modal = $('faqModal');
     let faqList = $('faqList');
 
-    // If the modal or faqList is missing, create a simple modal fallback.
     if (!modal) {
       const m = document.createElement('div');
       m.id = 'faqModal';
-      m.className = 'modal';
+      m.className = 'modal hidden';
       m.innerHTML = `<div class="modal-content" style="max-width:740px;">
         <h3 style="color:var(--gold-primary); margin-bottom:8px;">Frequently Asked Questions</h3>
         <div id="faqList" style="text-align:left; margin-top:8px;"></div>
@@ -69,7 +58,6 @@ function populateFaq() {
     faqList = $('faqList');
     if (!faqList) return;
 
-    // Acquire FAQ data from imported FAQS or from global fallback
     const faqData = (typeof FAQS !== 'undefined' && Array.isArray(FAQS) && FAQS.length > 0) ? FAQS : (window.FAQS || []);
 
     if (!faqData || faqData.length === 0) {
@@ -96,10 +84,8 @@ function populateFaq() {
       content.style.marginTop = '8px';
       content.style.color = 'var(--text-muted)';
       content.style.lineHeight = '1.5';
-      // Allow basic formatting in answers; escape to avoid injection
       content.innerHTML = `<div>${escapeHtml(String(f.answer || ''))}</div>`;
 
-      // Close button at the end of each expanded answer
       const closeInAnswer = document.createElement('button');
       closeInAnswer.className = 'btn btn-dark';
       closeInAnswer.style.marginTop = '10px';
@@ -110,14 +96,11 @@ function populateFaq() {
       });
 
       content.appendChild(closeInAnswer);
-
       details.appendChild(summary);
       details.appendChild(content);
-
       faqList.appendChild(details);
     });
 
-    // Ensure the modal-level close button exists and closes the modal
     let modalClose = $('closeFaqBtn');
     if (!modalClose) {
       const modalContent = modal.querySelector('.modal-content') || modal;
@@ -126,14 +109,13 @@ function populateFaq() {
       modalClose.className = 'btn btn-dark';
       modalClose.textContent = 'Close';
       modalClose.style.width = '100%';
-      // Append at the end of modal-content
       const wrapper = document.createElement('div');
       wrapper.style.marginTop = '12px';
       wrapper.appendChild(modalClose);
       modalContent.appendChild(wrapper);
     }
     modalClose.removeEventListener('click', modalClose._handler || (() => {}));
-    modalClose._handler = () => closeModal(modal);
+    modalClose._handler = () => closeModal($('faqModal'));
     modalClose.addEventListener('click', modalClose._handler);
 
   } catch (err) {
@@ -144,8 +126,11 @@ function populateFaq() {
 }
 
 function setupMenuHandlers() {
-  // Prevent default anchors for href="#"
-  document.querySelectorAll('a[href="#"]').forEach(a => a.addEventListener('click', (e) => e.preventDefault()));
+  document.querySelectorAll('a[href="#"]').forEach(a => {
+    if (a.id !== 'menuFAQ') {
+      a.addEventListener('click', (e) => e.preventDefault());
+    }
+  });
 
   const mobileToggle = document.getElementById("mobileMenuToggle");
   const menuLinksContainer = document.getElementById("menuLinksContainer");
@@ -153,7 +138,6 @@ function setupMenuHandlers() {
   const menuHome = $('menuHome');
   const menuGame = $('menuGame');
   const menuFAQ = $('menuFAQ');
-  const menuSupportBtn = $('menuSupportBtn');
 
   if (menuHome) {
     menuHome.addEventListener('click', (e) => {
@@ -169,34 +153,26 @@ function setupMenuHandlers() {
     });
   }
 
-    // FAQ Handler - ensure it opens the modal and closes mobile menu when on mobile
   if (menuFAQ) {
     menuFAQ.addEventListener('click', (e) => {
       e.preventDefault();
-      e.stopPropagation();
-      // populate the modal contents (creates modal if needed)
+      e.stopImmediatePropagation();
       populateFaq();
-      // open the faq modal
       openModal($('faqModal'));
 
-      // If mobile menu is open, close it to avoid modal being visually behind the menu
       try {
-        const menuLinks = document.getElementById('menuLinksContainer');
-        const mobileToggle = document.getElementById('mobileMenuToggle');
-        if (menuLinks && menuLinks.classList.contains('mobile-active')) {
-          menuLinks.classList.remove('mobile-active');
+        if (menuLinksContainer && menuLinksContainer.classList.contains('mobile-active')) {
+          menuLinksContainer.classList.remove('mobile-active');
         }
         if (mobileToggle) {
           mobileToggle.setAttribute('aria-expanded', 'false');
         }
       } catch (err) {
-        // non-fatal; we still opened FAQ
-        console.warn('Error while trying to close mobile menu after opening FAQ', err);
+        console.warn('Error closing mobile menu after opening FAQ', err);
       }
     });
   }
 
-  // Close handlers (defensive)
   const closeFaqBtn = $('closeFaqBtn');
   if (closeFaqBtn) {
     closeFaqBtn.addEventListener('click', () => closeModal($('faqModal')));
@@ -205,7 +181,6 @@ function setupMenuHandlers() {
   const closeSupportBtn = $('closeSupportBtn');
   if (closeSupportBtn) closeSupportBtn.addEventListener('click', () => closeModal($('supportModal')));
 
-  // Auth handlers
   const navLoginBtn = $('navLoginBtn');
   const navLogoutBtn = $('navLogoutBtn');
   if (navLoginBtn) {
@@ -234,7 +209,6 @@ function setupMenuHandlers() {
     });
   }
 
-  // Mobile Toggle behaviour (safe no-op if missing)
   if (mobileToggle && menuLinksContainer) {
     mobileToggle.setAttribute('aria-controls', 'menuLinksContainer');
     mobileToggle.setAttribute('aria-expanded', 'false');
@@ -260,15 +234,16 @@ function setupMenuHandlers() {
     });
 
     menuLinksContainer.querySelectorAll('a').forEach(link => {
-      link.addEventListener('click', () => {
-        menuLinksContainer.classList.remove('mobile-active');
-        mobileToggle.setAttribute('aria-expanded', 'false');
-      });
+      if (link.id !== 'menuFAQ') {
+        link.addEventListener('click', () => {
+          menuLinksContainer.classList.remove('mobile-active');
+          mobileToggle.setAttribute('aria-expanded', 'false');
+        });
+      }
     });
   }
 }
 
-// Wire up
 if (document.readyState === 'loading') {
   document.addEventListener('DOMContentLoaded', setupMenuHandlers);
 } else {
