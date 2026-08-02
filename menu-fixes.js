@@ -1,4 +1,4 @@
-// menu-fixes.js — corrected version
+// menu-fixes.js — Complete Fixed Version
 import { getAuth, signOut } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
 import { FAQS } from './faq.js'; 
 
@@ -42,7 +42,7 @@ async function populateLeaderboard() {
           const row = document.createElement('div');
           row.style.padding = '8px 10px';
           row.style.borderBottom = '1px solid rgba(255,255,255,0.03)';
-          row.innerHTML = `<strong style="color:var(--gold-primary);">${idx+1}.</strong> ${escapeHtml(r.name || 'Anonymous')} — <span style="color:var(--text-muted)">${escapeHtml(r.referral || '')}</span> — <strong style="color:var(--gold-light)">${Number(r.points||0)}</strong>`;
+          row.innerHTML = `<strong style="color:var(--gold-primary);">${idx + 1}.</strong> ${escapeHtml(r.name || 'Anonymous')} — <span style="color:var(--text-muted)">${escapeHtml(r.referral || '')}</span> — <strong style="color:var(--gold-light)">${Number(r.points || 0)}</strong>`;
           listEl.appendChild(row);
         });
         return;
@@ -94,7 +94,6 @@ function populateFaq() {
 }
 
 function setupMenuHandlers() {
-  // Prevent default jump for anchor links with "#"
   const mobileToggle = document.getElementById("mobileMenuToggle");
   const menuLinksContainer = document.getElementById("menuLinksContainer");
   document.querySelectorAll('a[href="#"]').forEach(a => a.addEventListener('click', (e) => e.preventDefault()));
@@ -112,7 +111,6 @@ function setupMenuHandlers() {
     });
   }
 
-  // Disable hidden buttons inside menu navigation
   const hiddenMenuButtons = document.querySelectorAll('.menu button.hidden');
   hiddenMenuButtons.forEach(button => {
     button.disabled = true;
@@ -142,7 +140,7 @@ function setupMenuHandlers() {
     });
   }
 
-  let supportLink = document.getElementById("menuSupport") || document.getElementById("menuSupportBtn");
+  const supportLink = document.getElementById("menuSupport") || document.getElementById("menuSupportBtn");
   if (supportLink) {
     supportLink.addEventListener('click', (e) => {
       if (e) { e.preventDefault(); e.stopPropagation(); }
@@ -196,51 +194,48 @@ function setupMenuHandlers() {
     });
   }
 
-  // --- mobile toggle: replace the existing mobileToggle handler with this block ---
+  // Mobile Toggle Behavior
   if (mobileToggle && menuLinksContainer) {
-  // set ARIA relationship for accessibility
-  mobileToggle.setAttribute('aria-controls', 'menuLinksContainer');
-  mobileToggle.setAttribute('aria-expanded', 'false');
+    mobileToggle.setAttribute('aria-controls', 'menuLinksContainer');
+    mobileToggle.setAttribute('aria-expanded', 'false');
 
-  mobileToggle.addEventListener('click', (e) => {
-    e.stopPropagation();
-    const opened = menuLinksContainer.classList.toggle('mobile-active');
-    // update ARIA
-    mobileToggle.setAttribute('aria-expanded', String(!!opened));
-  });
-
-  // Close the menu when clicking anywhere outside the menu or toggle
-  document.addEventListener('click', (e) => {
-    if (!menuLinksContainer.classList.contains('mobile-active')) return;
-    if (!menuLinksContainer.contains(e.target) && !mobileToggle.contains(e.target)) {
-      menuLinksContainer.classList.remove('mobile-active');
-      mobileToggle.setAttribute('aria-expanded', 'false');
-    }
-  });
-
-  // Also close on Escape key
-  document.addEventListener('keydown', (e) => {
-    if (e.key === 'Escape' && menuLinksContainer.classList.contains('mobile-active')) {
-      menuLinksContainer.classList.remove('mobile-active');
-      mobileToggle.setAttribute('aria-expanded', 'false');
-    }
-  });
-
-  // keep existing behavior that closes menu when any link inside is clicked
-  menuLinksContainer.querySelectorAll('a').forEach(link => {
-    link.addEventListener('click', () => {
-      menuLinksContainer.classList.remove('mobile-active');
-      mobileToggle.setAttribute('aria-expanded', 'false');
+    mobileToggle.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const opened = menuLinksContainer.classList.toggle('mobile-active');
+      mobileToggle.setAttribute('aria-expanded', String(!!opened));
     });
-  });
+
+    document.addEventListener('click', (e) => {
+      if (!menuLinksContainer.classList.contains('mobile-active')) return;
+      if (!menuLinksContainer.contains(e.target) && !mobileToggle.contains(e.target)) {
+        menuLinksContainer.classList.remove('mobile-active');
+        mobileToggle.setAttribute('aria-expanded', 'false');
+      }
+    });
+
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && menuLinksContainer.classList.contains('mobile-active')) {
+        menuLinksContainer.classList.remove('mobile-active');
+        mobileToggle.setAttribute('aria-expanded', 'false');
+      }
+    });
+
+    menuLinksContainer.querySelectorAll('a').forEach(link => {
+      link.addEventListener('click', () => {
+        menuLinksContainer.classList.remove('mobile-active');
+        mobileToggle.setAttribute('aria-expanded', 'false');
+      });
+    });
+  }
 }
 
-// Attach DOM Event Listeners
+// Attach Listeners
 if (document.readyState === 'loading') {
   document.addEventListener('DOMContentLoaded', setupMenuHandlers);
 } else {
   setupMenuHandlers();
 }
 
-if (typeof window !== 'undefined') window._menuFixes = { populateLeaderboard, populateFaq };
+if (typeof window !== 'undefined') {
+  window._menuFixes = { populateLeaderboard, populateFaq };
 }
