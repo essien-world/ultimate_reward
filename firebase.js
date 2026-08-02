@@ -27,7 +27,7 @@ import {
 const firebaseConfig = {
   apiKey: "AIzaSyDG-g0DIQ9zv-hkfscSJ98oF0FXRcCkeYY",
   authDomain: "maamatz-quiz.firebaseapp.com",
-  databaseURL: "https://maamatz-quiz-default-rtdb.firebaseio.com",
+  databaseURL: "https://maamatz-quiz-default-rtdb.europe-west1.firebasedatabase.app",
   projectId: "maamatz-quiz",
   storageBucket: "maamatz-quiz.firebasestorage.app",
   messagingSenderId: "303788530263",
@@ -53,18 +53,20 @@ async function registerUser({ name, phone, password, state, lga, referral }) {
   }
 
   const docRef = doc(db, "users", phone); // use phone as doc id
+  const uniqueRefCode = `GULD${Math.random().toString(36).slice(2, 6).toUpperCase()}`;
   const record = {
-    name,
-    phone,
-    passwordHash: password, // NOTE: for production DO NOT store plain passwords. Use Firebase Auth.
-    state: state || "",
-    lga: lga || "",
-    referral: referral || "",
-    points: 0,
-    validReferrals: 0,
-    redeemCode: "",
-    phoneVerified: false,
-    createdAt: serverTimestamp()
+  name,
+  phone,
+  passwordHash: password,
+  state: state || "",
+  lga: lga || "",
+  referral: uniqueRefCode, // <-- Assign the generated code here
+  referredBy: referral || "", // <-- Store who referred them (optional)
+  points: 0,
+  validReferrals: 0,
+  redeemCode: "",
+  phoneVerified: false,
+  createdAt: serverTimestamp()
   };
   await setDoc(docRef, record);
   return { success: true, record };
