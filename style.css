@@ -910,4 +910,20 @@ button:disabled {
   display: flex !important;
 }
 
+@media (max-width: 768px) {
+  .menu-links {
+    display: none;
+    flex-direction: column;
+    width: 100%;
+    position: absolute;
+    top: 100%;
+    left: 0;
+    background-color: #000;
+  }
+
+  .menu-links.mobile-active {
+    display: flex !important;
+  }
+}
+
 .hidden { display: none !important; }
