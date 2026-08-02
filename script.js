@@ -1664,20 +1664,21 @@ function escapeHtml(str) {
     .replace(/>/g, "&gt;");
 }
 // Compatibility: expose helpers to legacy/global scripts
-if (typeof window !== "undefined") {
+if (typeof window !== "undefined") 
   window.firebaseApp = app;
   window.firebaseDB = db;
   window.firebaseAuth = auth;
 
-  window.registerUser = registerUser;
-  window.lookupPhone = lookupPhone;
-  window.getUserData = getUserData;
-  window.submitBank = submitBank;
-  window.submitGame = submitGame;
-  window.redeem = redeem;
-  window.getLeaderboard = getLeaderboard;
-  window.submitComment = submitComment;
-  window.setPhoneVerified = setPhoneVerified;
-  window.checkReferrerPoints = checkReferrerPoints;
+  if (typeof window !== "undefined") {
+  window.registerUser = window.registerUser || registerUser;
+  window.lookupPhone = window.lookupPhone || lookupPhone;
+  window.getUserData = window.getUserData || getUserData;
+  window.submitBank = window.submitBank || submitBank;
+  window.submitGame = window.submitGame || submitGame;
+  window.redeem = window.redeem || redeem;
+  window.getLeaderboard = window.getLeaderboard || getLeaderboard;
+  window.submitComment = window.submitComment || submitComment;
+  window.setPhoneVerified = window.setPhoneVerified || setPhoneVerified;
+  window.checkReferrerPoints = window.checkReferrerPoints || checkReferrerPoints;
 }
 

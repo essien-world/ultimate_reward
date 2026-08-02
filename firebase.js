@@ -149,13 +149,16 @@ async function redeem({ phone, referral }) {
       if (!uSnap.exists()) throw new Error("User not found");
       const u = uSnap.data();
       if (u.redeemCode && u.redeemCode.length > 0) {
-        return { already: true, code: u.redeemCode, points: u.points, validReferrals: u.validReferrals || 0 };
+        return { already: true, code: u.redeemCode, points: u.points || 0, validReferrals: u.validReferrals || 0 };
       }
-      // generate code
+      // generate code and add points
       const code = `GULD-${Math.random().toString(36).slice(2, 8).toUpperCase()}`;
-      tx.update(userRef, { redeemCode: code, lastRedeemAt: serverTimestamp() });
+      const addedPoints = 600;
+      const newPoints = (u.points || 0) + addedPoints;
 
-      return { already: false, code, points: u.points || 0, validReferrals: u.validReferrals || 0 };
+      tx.update(userRef, { redeemCode: code, lastRedeemAt: serverTimestamp(), points: newPoints });
+
+      return { already: false, code, points: newPoints, validReferrals: u.validReferrals || 0 };
     });
     return { success: true, code: result.code, points: result.points, validReferrals: result.validReferrals, already: result.already };
   } catch (err) {
