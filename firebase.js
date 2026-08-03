@@ -51,13 +51,19 @@ async function registerUser({ name, phone, password, state, lga, referral }) {
   if (!snap.empty) {
     return { success: false, message: "Phone already registered" };
   }
+  const email = `${phone}@gulder.local`;
 
+await createUserWithEmailAndPassword(
+    auth,
+    email,
+    password
+);
   const docRef = doc(db, "users", phone); // use phone as doc id
   const uniqueRefCode = `GULD${Math.random().toString(36).slice(2, 6).toUpperCase()}`;
   const record = {
   name,
   phone,
-  passwordHash: password,
+  
   state: state || "",
   lga: lga || "",
   referral: uniqueRefCode, // <-- Assign the generated code here
@@ -78,8 +84,20 @@ async function lookupPhone({ phone, password }) {
   if (!snap.exists()) return { success: false, message: "User not found" };
   const data = snap.data();
   // Simple check (mimics current system). For production use Firebase Auth.
-  if (password && data.passwordHash !== password) return { success: false, message: "Invalid password" };
-  return { success: true, record: data };
+  const email = `${phone}@gulder.local`;
+
+try {
+    await signInWithEmailAndPassword(
+        auth,
+        email,
+        password
+    );
+} catch (err) {
+    return {
+        success: false,
+        message: "Invalid phone number or password"
+    };
+}
 }
 
 async function getUserData({ phone }) {
