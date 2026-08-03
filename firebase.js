@@ -92,12 +92,12 @@ try {
         email,
         password
     );
-} catch (err) {
+  } catch (err) {
     return {
         success: false,
         message: "Invalid phone number or password"
     };
-}
+ }
 }
 
 async function getUserData({ phone }) {
