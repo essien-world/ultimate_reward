@@ -100,36 +100,54 @@ h1, h2, h3 {
   text-align: center;
 }
 
-/* Hamburger / Menu Toggle - styled for mobile */
+/* Mobile Hamburger Toggle — updated modern 3-line design */
 .menu-toggle {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 44px;
-  height: 44px;
+  width: 48px;
+  height: 40px;
   border-radius: 8px;
-  background: transparent;
+  background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
   border: 1px solid rgba(255,255,255,0.04);
   cursor: pointer;
-  margin-left: 8px;
   padding: 6px;
-  gap: 3px;
+  gap: 0;
+  transition: background 180ms ease, transform 160ms ease;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.45);
 }
 
-.menu-toggle:focus {
-  outline: 2px solid rgba(212,175,55,0.25);
-  outline-offset: 2px;
-}
-
-/* three bars inside the toggle */
+/* three unbroken horizontal bars */
 .menu-toggle .bar {
   display: block;
-  width: 18px;
-  height: 2px;
-  background: var(--text-white);
-  border-radius: 2px;
-  transition: transform 0.2s ease, opacity 0.2s ease;
+  width: 26px;              /* almost full width of the control */
+  height: 3px;              /* solid, unbroken line */
+  background: linear-gradient(90deg, #ffffff, #ffd700); /* subtle gilded gradient */
+  border-radius: 3px;
+  margin: 4px 0;            /* consistent spacing between bars */
+  transition: transform 240ms cubic-bezier(.2,.8,.2,1), opacity 200ms ease;
+  box-shadow: 0 1px 0 rgba(0,0,0,0.55);
 }
+
+/* focus for accessibility */
+.menu-toggle:focus {
+  outline: 2px solid rgba(212,175,55,0.24);
+  outline-offset: 4px;
+}
+
+/* animated 'open' state (turns into a cross) */
+.menu-toggle.open .bar:nth-child(1) {
+  transform: translateY(7px) rotate(45deg);
+}
+.menu-toggle.open .bar:nth-child(2) {
+  opacity: 0;
+  transform: scaleX(0.2);
+}
+.menu-toggle.open .bar:nth-child(3) {
+  transform: translateY(-7px) rotate(-45deg);
+}
+
+/* keep existing responsive rules (no change needed) */
 
 /* Collapsible Links Container (desktop and mobile states handled below) */
 .menu-links {
