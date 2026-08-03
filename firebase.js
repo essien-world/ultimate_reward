@@ -63,7 +63,6 @@ await createUserWithEmailAndPassword(
   const record = {
   name,
   phone,
-  
   state: state || "",
   lga: lga || "",
   referral: uniqueRefCode, // <-- Assign the generated code here
@@ -92,12 +91,12 @@ try {
         email,
         password
     );
-  } catch (err) {
+} catch (err) {
     return {
         success: false,
         message: "Invalid phone number or password"
     };
- }
+}
 }
 
 async function getUserData({ phone }) {
