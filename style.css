@@ -836,3 +836,37 @@ h1, h2, h3 {
 
   .brand-logo-img { height: 34px; }
 }
+
+/* Ensure modal/FAQ close buttons are visible on small screens (mobile) */
+@media (max-width: 767px) {
+  /* Give modal content extra bottom padding so buttons inside modals aren't hidden */
+  .modal-content {
+    padding-bottom: 80px; /* leaves space for the close button / safe area */
+  }
+
+  /* For the full-screen modals (leaderboard etc.) make the close button sticky near the bottom */
+  #closeLeaderboardBtn,
+  #closeFaqBtn {
+    position: absolute;
+    left: 16px;
+    right: 16px;
+    bottom: 12px;
+    z-index: 3;
+    width: calc(100% - 32px);
+    /* match the modal button styles */
+    margin: 0;
+  }
+
+  /* For the FAQ bottom-sheet / slide-in panel add space inside the scroll region */
+  .faq-panel .faq-panel-content {
+    padding-bottom: 96px; /* leave room for sticky / absolute close button */
+  }
+
+  /* If the FAQ panel close button exists inside the panel header, ensure it's visible above the content */
+  .faq-panel #closeFaqBtn {
+    position: absolute;
+    right: 12px;
+    bottom: 12px;
+    z-index: 4;
+  }
+}
