@@ -7,16 +7,16 @@ const AD_WAIT_MS = 7000;
 
 // Pre-generated 10 comments (will display 5 at a time and rotate)
 const PRESET_COMMENTS = [
-  { name: "Amaka O.", text: "Love the trivia — cleaned the GULDER unit in one go! This game keeps me coming back.", time: "2h" },
-  { name: "Tunde A.", text: "I won a weekend voucher. The redemption flow is slick — great UX!", time: "1d" },
-  { name: "Chinelo M.", text: "Fast loading and fun questions. The leaderboard is motivating!", time: "3d" },
-  { name: "Ibrahim S.", text: "Shared the link and got my 600 points. The energy meter is a fun touch.", time: "5d" },
-  { name: "Grace N.", text: "Finally hit the top 10 — the game is addictive but fair.", time: "6d" },
-  { name: "Kemi R.", text: "The sponsor ads were quick and I redeemed my code — great prizes.", time: "1w" },
-  { name: "Bayo O.", text: "I almost won the daily draw! Questions were challenging but rewarding.", time: "8h" },
-  { name: "Sandra L.", text: "Great prizes and the community is buzzing. I recommended it to friends.", time: "4d" },
-  { name: "Peter V.", text: "Fast support and payouts — bank upload UI is clear when unlocked.", time: "2w" },
-  { name: "Nkechi T.", text: "Best trivia I've played this year. The combined rounds are a nice twist.", time: "10h" }
+  { name: "Amaka O.", text: "20 seconds is too short.", time: "5m" },
+  { name: "Tunde A.", text: "i was not even able to answer all the questions.", time: "8m" },
+  { name: "Chinelo M.", text: "first round was difficult, i had only 4 correct answers, na second round i come get 9 correct answers.", time: "8m" },
+  { name: "Ibrahim S.", text: "gulder unit is very hard. i will come back tomorrow. stronger", time: "9m" },
+  { name: "Grace N.", text: "i watch the ads after the first round expecting same questions in second round, but na new questions entirely.", time: "11m" },
+  { name: "Kemi R.", text: "500 points for valid referral, it is a good deal for me.", time: "13m" },
+  { name: "Bayo O.", text: "i must get to that top.", time: "5h" },
+  { name: "Sandra L.", text: "i need 10000 points to unlock bank details.", time: "13m" },
+  { name: "Peter V.", text: "the promo is real, i have confirm it. i will come back stronger", time: "15m" },
+  { name: "Nkechi T.", text: "i think we should be playing more often, that 2 time a day.", time: "18m" }
 ];
 
 let commentBatchIndex = 0; // 0 shows comments 0-4, 1 shows comments 5-9
