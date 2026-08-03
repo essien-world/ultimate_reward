@@ -19,9 +19,9 @@ const OTP_SEND_URL = "https://example.com/send-otp";
 const OTP_VERIFY_URL = "https://example.com/verify-otp";
 
 let currentUser = null; // module-scoped user
-function setCurrentUser(user) {
-  currentUser = user;
-  try { window.currentUser = user; } catch (e) { /* ignore */ }
+function setCurrentUser(user) { currentUser = user; try { window.currentUser = user; } catch (e) { /* ignore */ } 
+
+// Persist sanitized user to localStorage so login survives page reloads. // Do NOT store passwords or sensitive tokens. try { if (user) { const sanitized = Object.assign({}, user); // remove server-side password hash if present if (sanitized.passwordHash) delete sanitized.passwordHash; // Also remove any other sensitive props if present if (sanitized.password) delete sanitized.password; localStorage.setItem("gulder_current_user", JSON.stringify(sanitized)); } else { localStorage.removeItem("gulder_current_user"); } } catch (err) { console.warn("Failed to persist current user to localStorage:", err); } }
 }
 
 let shareCount = 0;
@@ -50,6 +50,7 @@ const REF_WORD = "GULDER";
 // DOM ready
 document.addEventListener("DOMContentLoaded", () => {
   setupOnlineOfflineHandlers();
+  // Restore persisted user (if any) so login survives page reload try { const stored = localStorage.getItem("gulder_current_user"); if (stored) { const parsed = JSON.parse(stored); if (parsed && parsed.phone) { // restore to memory and global window setCurrentUser(parsed); // reflect the logged-in UI immediately, then refresh server-side data updateLoginUI(); // refreshUserData is async but safe to call now refreshUserData().catch((e) => console.warn("refreshUserData error on init:", e)); } } } catch (err) { console.warn("Error restoring persisted user:", err); }
   removeClutterMenuItems(); // hide My Reward & old comment link if present
   setupMenuFAQHandler();
   setupSupportMenu(); // creates support menu link (visible to logged in users)
