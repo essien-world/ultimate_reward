@@ -73,6 +73,7 @@ onAuthStateChanged(auth, async (fbUser) => {
     console.error("onAuthStateChanged handler error:", err);
   }
 });
+
 let shareCount = 0;
 let isRedeemed = false;
 
