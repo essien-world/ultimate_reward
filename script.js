@@ -13,7 +13,8 @@ import {
   getLeaderboard,
   submitComment,
   setPhoneVerified,
-  checkReferrerPoints
+  checkReferrerPoints,
+  processReferralClaims
 } from "./firebase.js";
 
 const SPONSOR_URL = "https://google.com";
@@ -971,6 +972,22 @@ async function refreshUserData() {
       const supportLink = document.getElementById("menuSupport") || document.getElementById("menuSupportBtn");
       if (supportLink && currentUser) supportLink.style.display = "inline-block";
     }
+  }    
+  // Claim any pending referral points for this user
+  try {
+    await processReferralClaims({ referrerPhone: currentUser.phone });
+  } catch (claimErr) {
+    console.warn("Failed processing referral claims:", claimErr);
+  }
+
+  try {
+    const res = await apiCall({ action: "getUserData", phone: currentUser.phone });
+    if (res && res.success) {
+      if (document.getElementById("dashVisitors")) document.getElementById("dashVisitors").textContent = res.validReferrals;
+      if (document.getElementById("dashPoints")) document.getElementById("dashPoints").textContent = res.points;
+      // ... rest of refreshUserData logic ...
+    }
+
   } catch (err) {
     console.error("refreshUserData error:", err);
   }
