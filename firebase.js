@@ -207,6 +207,7 @@ async function submitGameAnswer(gameId, selectedAnswer) {
   }
 }
 
+
 async function redeem({ phone, referral }) {
   const userRef = doc(db, "users", phone);
   
