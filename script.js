@@ -1,4 +1,6 @@
-
+// add near the top, after you import backend helper functions
+import { auth } from "./firebase.js";
+import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
 
 // script.js (fixed, ready-to-use)
 import {
@@ -26,44 +28,54 @@ function setCurrentUser(user) { currentUser = user; try { window.currentUser = u
 // Persist sanitized user to localStorage so login survives page reloads. // Do NOT store passwords or sensitive tokens. try { if (user) { const sanitized = Object.assign({}, user); // remove server-side password hash if present if (sanitized.passwordHash) delete sanitized.passwordHash; // Also remove any other sensitive props if present if (sanitized.password) delete sanitized.password; localStorage.setItem("gulder_current_user", JSON.stringify(sanitized)); } else { localStorage.removeItem("gulder_current_user"); } } catch (err) { console.warn("Failed to persist current user to localStorage:", err); } }
 }
 
-// Keep UI/session in sync with Firebase Auth
+// Keep UI/session in sync with Firebase Auth (robust, uses apiCall to fetch server data)
 onAuthStateChanged(auth, async (fbUser) => {
   try {
-    if (fbUser) {
-      // email is phone@gulder.local => extract phone
-      const phone = (fbUser.email || "").split("@")[0];
-      if (!phone) return;
-
-      // fetch full user document to populate name/referral etc.
-      const userDoc = await getDoc(doc(db, "users", phone));
-      if (userDoc.exists()) {
-        const d = userDoc.data() || {};
-        const userObj = {
-          name: d.name || "",
-          phone,
-          referral: d.referral || "",
-          phoneVerified: !!d.phoneVerified,
-          bankDetails: d.bankDetails || null,
-          // include any other fields you need in the UI
-        };
-
-        setCurrentUser(userObj);           // persist to localStorage
-        updateLoginUI();                   // show dashboard
-        await refreshUserData().catch(e => console.warn("refreshUserData failed on auth change:", e));
-      } else {
-        // If there is no Firestore doc, keep any persisted localStorage user (or sign-out)
-        console.warn("Auth user authenticated but no user document exists:", phone);
-      }
-    } else {
-      // No firebase user (signed out). Do NOT force sign-out UI if you prefer to keep localStorage fallback.
-      // If you want to fully sign out the UI when Firebase session disappears, uncomment:
-      // setCurrentUser(null); updateLoginUI(); // or redirect to login
+    if (!fbUser) {
+      // Firebase has no active user. We intentionally do NOT wipe localStorage here;
+      // that behavior is up to you. If you want to force sign-out UI, call setCurrentUser(null) here.
+      return;
     }
+
+    // email is phone@gulder.local -> take the phone part
+    const phone = (fbUser.email || "").split("@")[0];
+    if (!phone) return;
+
+    // try to restore persisted local user (to keep name/referral)
+    let local = null;
+    try { local = JSON.parse(localStorage.getItem("gulder_current_user") || "null"); } catch (e) { local = null; }
+
+    // fetch server-side user data (points, bankDetails, phoneVerified, redeemCode, etc.)
+    const server = await apiCall({ action: "getUserData", phone });
+    if (!server || !server.success) {
+      // still set basic user so UI won't be blocked (use local fallback)
+      const fallback = Object.assign({}, local || {}, { phone });
+      setCurrentUser(fallback);
+      updateLoginUI();
+      return;
+    }
+
+    // merge local metadata (name, referral) with server data
+    const merged = Object.assign({}, local || {}, {
+      phone,
+      name: (local && local.name) || (local && local.phone) ? (local.name || "") : (local ? local.name : ""),
+      referral: (local && local.referral) || "",
+      points: server.points || 0,
+      validReferrals: server.validReferrals || 0,
+      redeemCode: server.redeemCode || "",
+      phoneVerified: !!server.phoneVerified,
+      gameCorrectToday: server.gameCorrectToday || 0,
+      bankDetails: server.bankDetails || null
+    });
+
+    setCurrentUser(merged);
+    updateLoginUI();
+    // update UI pieces that rely on latest server info
+    await refreshUserData().catch((e) => console.warn("refreshUserData error on auth change:", e));
   } catch (err) {
     console.error("onAuthStateChanged handler error:", err);
   }
 });
-
 let shareCount = 0;
 let isRedeemed = false;
 
