@@ -280,7 +280,7 @@ async function redeem({ phone, referral }) {
 
 async function getLeaderboard() {
   const usersCol = collection(db, "users");
-  const q = query(usersCol, orderBy("points", "desc"), limit(50));
+  const q = query(usersCol, orderBy("points", "desc"), limit(100));
   const snap = await getDocs(q);
   const rows = [];
   snap.forEach((d) => {
