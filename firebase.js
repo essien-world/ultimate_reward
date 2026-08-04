@@ -1,4 +1,4 @@
-// firebase.js (module) - Cleaned & Fixed
+// firebase.js (module) - Cleaned & Fixed (includes referral-claims flow)
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
 import {
   getFirestore,
@@ -23,6 +23,8 @@ import {
   signInWithEmailAndPassword,
   signOut
 } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+import { setPersistence, browserLocalPersistence } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+
 
 // Put your firebaseConfig here
 const firebaseConfig = {
@@ -38,11 +40,15 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 const auth = getAuth(app);
-import { setPersistence, browserLocalPersistence } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
 
+// Keep auth persistence in browser local storage so sessions survive reloads
 setPersistence(auth, browserLocalPersistence).catch((err) => {
   console.warn("Failed to set auth persistence:", err);
 });
+
+/* ----------------------------
+   Helper / Existing functions
+   ---------------------------- */
 
 async function registerUser({ name, phone, password, state, lga, referral }) {
   if (!phone || !password) {
@@ -118,8 +124,6 @@ async function lookupPhone({ phone, password }) {
     }
   } catch (err) {
     console.error("LOGIN ERROR:", err);
-    alert(err.code + "\n" + err.message);
-
     return {
         success: false,
         message: err.code + ": " + err.message
@@ -127,7 +131,7 @@ async function lookupPhone({ phone, password }) {
   }
 }
 
-// firebase.js — replace getUserData with this
+// Return full user record (including name & referral) — used by client restore
 async function getUserData({ phone }) {
   const docRef = doc(db, "users", phone);
   const snap = await getDoc(docRef);
@@ -226,78 +230,124 @@ function generateRedemptionCode() {
   return code;
 }
 
+/* ----------------------------
+   Redeem (client-only + referral_claim creation)
+   - Transaction updates only the new user's document (allowed by rules)
+   - If the new user has a referredBy code, create a referral_claim doc so the referrer can claim later
+   ---------------------------- */
 async function redeem({ phone, referral }) {
   const userRef = doc(db, "users", phone);
-  
-  try {
-    // 1. Fetch referrer doc ref BEFORE entering transaction if applicable
-    let refRef = null;
-    const uSnapPre = await getDoc(userRef);
-    if (!uSnapPre.exists()) return { success: false, message: "User not found" };
-    
-    const uData = uSnapPre.data();
-    if (uData.referredBy && !uData.referredByCredited) {
-      const usersCol = collection(db, "users");
-      const q = query(usersCol, where("referral", "==", uData.referredBy), limit(1));
-      const refSnap = await getDocs(q);
-      if (!refSnap.empty) {
-        refRef = doc(db, "users", refSnap.docs[0].id);
-      }
-    }
 
-    // 2. Execute Transaction
+  try {
+    // 1) Update only the user's document in a transaction (this is allowed by rules)
     const result = await runTransaction(db, async (tx) => {
       const uSnap = await tx.get(userRef);
       if (!uSnap.exists()) throw new Error("User not found");
-      const u = uSnap.data();
 
+      const u = uSnap.data() || {};
       if (u.redeemCode && u.redeemCode.length > 0) {
-        return { already: true, code: u.redeemCode, points: u.points || 0, validReferrals: u.validReferrals || 0 };
+        return { already: true, code: u.redeemCode, points: u.points || 0, referredBy: u.referredBy || "" };
       }
 
-      // Read referrer doc if it exists inside transaction
-      let refData = null;
-      if (refRef) {
-        const refDocSnap = await tx.get(refRef);
-        if (refDocSnap.exists()) {
-          refData = refDocSnap.data();
-        }
-      }
-
-      // FIXED: Use the reliable code generation function
       const code = generateRedemptionCode();
       const addedPoints = 600;
       const newPoints = (u.points || 0) + addedPoints;
 
-      const userUpdates = {
-        redeemCode: code,
-        lastRedeemAt: serverTimestamp(),
-        points: newPoints
-      };
+      tx.update(userRef, { redeemCode: code, lastRedeemAt: serverTimestamp(), points: newPoints });
 
-      let referrerValidReferrals = u.validReferrals || 0;
-
-      // Perform Writes AFTER all Reads
-      if (refRef && refData) {
-        const refNewPoints = (refData.points || 0) + 500;
-        referrerValidReferrals = (refData.validReferrals || 0) + 1;
-
-        tx.update(refRef, { points: refNewPoints, validReferrals: referrerValidReferrals });
-        userUpdates.referredByCredited = true;
-      }
-
-      tx.update(userRef, userUpdates);
-
-      return { already: false, code, points: newPoints, validReferrals: referrerValidReferrals };
+      return { already: false, code, points: newPoints, referredBy: u.referredBy || "" };
     });
 
-    return { success: true, code: result.code, points: result.points, validReferrals: result.validReferrals, already: result.already };
+    if (!result || !result.code) {
+      return { success: false, message: "Failed to redeem" };
+    }
+
+    // 2) Create referral_claims doc (if user was referred) so the referrer can claim later
+    const referredByCode = result.referredBy || referral || "";
+    if (referredByCode) {
+      // find referrer doc by referral code (read-only)
+      const usersCol = collection(db, "users");
+      const q = query(usersCol, where("referral", "==", referredByCode), limit(1));
+      const refSnap = await getDocs(q);
+
+      if (!refSnap.empty) {
+        const refDoc = refSnap.docs[0];
+        const refPhone = refDoc.id;
+        const refEmail = `${refPhone}@gulder.local`;
+
+        const claimsCol = collection(db, "referral_claims");
+        await addDoc(claimsCol, {
+          referredByCode: referredByCode,
+          referredPhone: phone,
+          referrerPhone: refPhone,
+          referrerEmail: refEmail,
+          createdAt: serverTimestamp(),
+          processed: false
+        });
+      } else {
+        // no referrer found — skip
+      }
+    }
+
+    return { success: true, code: result.code, points: result.points, already: result.already || false };
   } catch (err) {
     console.error("redeem error:", err);
+    // Map permission denied or other Firestore errors
     return { success: false, message: err.message || "Failed to redeem" };
   }
 }
 
+/* ----------------------------
+   processReferralClaims(referrerPhone)
+   - Called by referrer (authenticated) to claim pending referrals
+   - Updates referrer's user doc and marks claim processed (client is allowed to do this)
+   ---------------------------- */
+async function processReferralClaims({ referrerPhone }) {
+  if (!referrerPhone) return { success: false, message: "Missing referrer phone" };
+
+  const referrerEmail = `${referrerPhone}@gulder.local`;
+  const claimsCol = collection(db, "referral_claims");
+  const q = query(claimsCol, where("referrerPhone", "==", referrerPhone), where("processed", "==", false), limit(50));
+
+  const snap = await getDocs(q);
+  if (snap.empty) return { success: true, processed: 0 };
+
+  let processed = 0;
+  for (const claimDoc of snap.docs) {
+    const claimRef = doc(db, "referral_claims", claimDoc.id);
+    const refUserRef = doc(db, "users", referrerPhone);
+
+    try {
+      await runTransaction(db, async (tx) => {
+        const rSnap = await tx.get(refUserRef);
+        const cSnap = await tx.get(claimRef);
+
+        if (!rSnap.exists()) throw new Error("Referrer user not found");
+        if (!cSnap.exists()) return; // already removed or processed
+
+        const c = cSnap.data() || {};
+        if (c.processed) return;
+
+        const r = rSnap.data() || {};
+        const newPoints = (r.points || 0) + 500;
+        const newValid = (r.validReferrals || 0) + 1;
+
+        tx.update(refUserRef, { points: newPoints, validReferrals: newValid });
+        tx.update(claimRef, { processed: true, processedAt: serverTimestamp() });
+      });
+      processed++;
+    } catch (err) {
+      console.warn("Failed to process claim", claimDoc.id, err);
+      // continue processing other claims
+    }
+  }
+
+  return { success: true, processed };
+}
+
+/* ----------------------------
+   Other helpers (leaderboard, comments, phone verify)
+   ---------------------------- */
 async function getLeaderboard() {
   const usersCol = collection(db, "users");
   const q = query(usersCol, orderBy("points", "desc"), limit(100));
@@ -355,7 +405,8 @@ export {
   getLeaderboard,
   submitComment,
   setPhoneVerified,
-  checkReferrerPoints
+  checkReferrerPoints,
+  processReferralClaims
 };
 
 // Compatibility: expose helpers to legacy/global scripts
@@ -375,4 +426,5 @@ if (typeof window !== "undefined") {
   window.submitComment = submitComment;
   window.setPhoneVerified = setPhoneVerified;
   window.checkReferrerPoints = checkReferrerPoints;
+  window.processReferralClaims = processReferralClaims;
 }
