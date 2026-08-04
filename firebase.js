@@ -209,7 +209,24 @@ async function submitGameAnswer(gameId, selectedAnswer) {
 
 async function redeem({ phone, referral }) {
   const userRef = doc(db, "users", phone);
+  
   try {
+    // 1. Fetch referrer doc ref BEFORE entering transaction if applicable
+    let refRef = null;
+    const uSnapPre = await getDoc(userRef);
+    if (!uSnapPre.exists()) return { success: false, message: "User not found" };
+    
+    const uData = uSnapPre.data();
+    if (uData.referredBy && !uData.referredByCredited) {
+      const usersCol = collection(db, "users");
+      const q = query(usersCol, where("referral", "==", uData.referredBy), limit(1));
+      const refSnap = await getDocs(q);
+      if (!refSnap.empty) {
+        refRef = doc(db, "users", refSnap.docs[0].id);
+      }
+    }
+
+    // 2. Execute Transaction
     const result = await runTransaction(db, async (tx) => {
       const uSnap = await tx.get(userRef);
       if (!uSnap.exists()) throw new Error("User not found");
@@ -217,6 +234,15 @@ async function redeem({ phone, referral }) {
 
       if (u.redeemCode && u.redeemCode.length > 0) {
         return { already: true, code: u.redeemCode, points: u.points || 0, validReferrals: u.validReferrals || 0 };
+      }
+
+      // Read referrer doc if it exists inside transaction
+      let refData = null;
+      if (refRef) {
+        const refDocSnap = await tx.get(refRef);
+        if (refDocSnap.exists()) {
+          refData = refDocSnap.data();
+        }
       }
 
       const code = `GULD-${Math.random().toString(36).slice(2, 8).toUpperCase()}`;
@@ -230,20 +256,14 @@ async function redeem({ phone, referral }) {
       };
 
       let referrerValidReferrals = u.validReferrals || 0;
-      if (u.referredBy && !u.referredByCredited) {
-        const usersCol = collection(db, "users");
-        const q = query(usersCol, where("referral", "==", u.referredBy), limit(1));
-        const refSnap = await getDocs(q);
-        if (!refSnap.empty) {
-          const refDoc = refSnap.docs[0];
-          const refRef = doc(db, "users", refDoc.id);
-          const refData = refDoc.data();
-          const refNewPoints = (refData.points || 0) + 500;
-          referrerValidReferrals = (refData.validReferrals || 0) + 1;
 
-          tx.update(refRef, { points: refNewPoints, validReferrals: referrerValidReferrals });
-          userUpdates.referredByCredited = true;
-        }
+      // Perform Writes AFTER all Reads
+      if (refRef && refData) {
+        const refNewPoints = (refData.points || 0) + 500;
+        referrerValidReferrals = (refData.validReferrals || 0) + 1;
+
+        tx.update(refRef, { points: refNewPoints, validReferrals: referrerValidReferrals });
+        userUpdates.referredByCredited = true;
       }
 
       tx.update(userRef, userUpdates);
