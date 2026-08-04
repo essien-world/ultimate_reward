@@ -188,6 +188,32 @@ async function submitGame({ phone, correctCount, roundNumber }) {
     console.error("submitGame error:", err);
     return { success: false, message: err.message || "Failed to submit game" };
   }
+  import { doc, updateDoc, increment } from "firebase/firestore";
+import { db, auth } from "./firebase.js";
+
+async function submitGameAnswer(gameId, selectedAnswer) {
+  // Get logged-in user's phone number / ID
+  const userPhone = auth.currentUser.email.split('@')[0]; 
+  const userRef = doc(db, "users", userPhone);
+
+  try {
+    // Attempt to update the user document
+    await updateDoc(userRef, {
+      lastGameId: gameId,
+      lastAnswer: selectedAnswer,
+      points: increment(10),
+      gameCorrectToday: true
+    });
+
+    alert("Correct answer! 10 points added to your account.");
+  } catch (error) {
+    // If the answer was wrong or user already played, Firestore rules block it here
+    if (error.code === 'permission-denied') {
+      alert("Incorrect answer or you have already completed today's game!");
+    } else {
+      alert("Submission error: " + error.message);
+    }
+  }
 }
 
 async function redeem({ phone, referral }) {
