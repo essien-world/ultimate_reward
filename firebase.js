@@ -127,14 +127,18 @@ async function lookupPhone({ phone, password }) {
   }
 }
 
+// firebase.js — replace getUserData with this
 async function getUserData({ phone }) {
   const docRef = doc(db, "users", phone);
   const snap = await getDoc(docRef);
   if (!snap.exists()) return { success: false, message: "User not found" };
-  const data = snap.data();
+  const data = snap.data() || {};
 
   return {
     success: true,
+    name: data.name || "",
+    phone: data.phone || phone,
+    referral: data.referral || "",
     points: data.points || 0,
     validReferrals: data.validReferrals || 0,
     redeemCode: data.redeemCode || "",

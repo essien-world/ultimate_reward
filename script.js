@@ -28,38 +28,39 @@ function setCurrentUser(user) { currentUser = user; try { window.currentUser = u
 // Persist sanitized user to localStorage so login survives page reloads. // Do NOT store passwords or sensitive tokens. try { if (user) { const sanitized = Object.assign({}, user); // remove server-side password hash if present if (sanitized.passwordHash) delete sanitized.passwordHash; // Also remove any other sensitive props if present if (sanitized.password) delete sanitized.password; localStorage.setItem("gulder_current_user", JSON.stringify(sanitized)); } else { localStorage.removeItem("gulder_current_user"); } } catch (err) { console.warn("Failed to persist current user to localStorage:", err); } }
 }
 
-// Keep UI/session in sync with Firebase Auth (robust, uses apiCall to fetch server data)
+// script.js — robust onAuthStateChanged handler
+import { auth } from "./firebase.js";
+import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+
 onAuthStateChanged(auth, async (fbUser) => {
   try {
     if (!fbUser) {
-      // Firebase has no active user. We intentionally do NOT wipe localStorage here;
-      // that behavior is up to you. If you want to force sign-out UI, call setCurrentUser(null) here.
+      // no firebase user signed in — keep localStorage if you want an offline fallback
       return;
     }
 
-    // email is phone@gulder.local -> take the phone part
     const phone = (fbUser.email || "").split("@")[0];
     if (!phone) return;
 
-    // try to restore persisted local user (to keep name/referral)
+    // load persisted local user (optional)
     let local = null;
     try { local = JSON.parse(localStorage.getItem("gulder_current_user") || "null"); } catch (e) { local = null; }
 
-    // fetch server-side user data (points, bankDetails, phoneVerified, redeemCode, etc.)
+    // fetch full user record from backend (now includes name & referral)
     const server = await apiCall({ action: "getUserData", phone });
+
     if (!server || !server.success) {
-      // still set basic user so UI won't be blocked (use local fallback)
+      // fallback to local if server call fails
       const fallback = Object.assign({}, local || {}, { phone });
       setCurrentUser(fallback);
       updateLoginUI();
       return;
     }
 
-    // merge local metadata (name, referral) with server data
     const merged = Object.assign({}, local || {}, {
       phone,
-      name: (local && local.name) || (local && local.phone) ? (local.name || "") : (local ? local.name : ""),
-      referral: (local && local.referral) || "",
+      name: server.name || (local && local.name) || "",
+      referral: server.referral || (local && local.referral) || "",
       points: server.points || 0,
       validReferrals: server.validReferrals || 0,
       redeemCode: server.redeemCode || "",
@@ -70,8 +71,7 @@ onAuthStateChanged(auth, async (fbUser) => {
 
     setCurrentUser(merged);
     updateLoginUI();
-    // update UI pieces that rely on latest server info
-    await refreshUserData().catch((e) => console.warn("refreshUserData error on auth change:", e));
+    await refreshUserData().catch(e => console.warn("refreshUserData failed on auth change:", e));
   } catch (err) {
     console.error("onAuthStateChanged handler error:", err);
   }
