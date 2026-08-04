@@ -1014,7 +1014,9 @@ async function refreshUserData() {
       const supportLink = document.getElementById("menuSupport") || document.getElementById("menuSupportBtn");
       if (supportLink && currentUser) supportLink.style.display = "inline-block";
     }
-  }    
+  } catch (err) {
+    console.error("refreshUserData error:", err);
+  }
   // Claim any pending referral points for this user
   try {
     await processReferralClaims({ referrerPhone: currentUser.phone });
