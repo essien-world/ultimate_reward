@@ -38,6 +38,11 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 const auth = getAuth(app);
+import { setPersistence, browserLocalPersistence } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+
+setPersistence(auth, browserLocalPersistence).catch((err) => {
+  console.warn("Failed to set auth persistence:", err);
+});
 
 async function registerUser({ name, phone, password, state, lga, referral }) {
   if (!phone || !password) {

@@ -1,3 +1,5 @@
+
+
 // script.js (fixed, ready-to-use)
 import {
   registerUser,
@@ -23,6 +25,44 @@ function setCurrentUser(user) { currentUser = user; try { window.currentUser = u
 
 // Persist sanitized user to localStorage so login survives page reloads. // Do NOT store passwords or sensitive tokens. try { if (user) { const sanitized = Object.assign({}, user); // remove server-side password hash if present if (sanitized.passwordHash) delete sanitized.passwordHash; // Also remove any other sensitive props if present if (sanitized.password) delete sanitized.password; localStorage.setItem("gulder_current_user", JSON.stringify(sanitized)); } else { localStorage.removeItem("gulder_current_user"); } } catch (err) { console.warn("Failed to persist current user to localStorage:", err); } }
 }
+
+// Keep UI/session in sync with Firebase Auth
+onAuthStateChanged(auth, async (fbUser) => {
+  try {
+    if (fbUser) {
+      // email is phone@gulder.local => extract phone
+      const phone = (fbUser.email || "").split("@")[0];
+      if (!phone) return;
+
+      // fetch full user document to populate name/referral etc.
+      const userDoc = await getDoc(doc(db, "users", phone));
+      if (userDoc.exists()) {
+        const d = userDoc.data() || {};
+        const userObj = {
+          name: d.name || "",
+          phone,
+          referral: d.referral || "",
+          phoneVerified: !!d.phoneVerified,
+          bankDetails: d.bankDetails || null,
+          // include any other fields you need in the UI
+        };
+
+        setCurrentUser(userObj);           // persist to localStorage
+        updateLoginUI();                   // show dashboard
+        await refreshUserData().catch(e => console.warn("refreshUserData failed on auth change:", e));
+      } else {
+        // If there is no Firestore doc, keep any persisted localStorage user (or sign-out)
+        console.warn("Auth user authenticated but no user document exists:", phone);
+      }
+    } else {
+      // No firebase user (signed out). Do NOT force sign-out UI if you prefer to keep localStorage fallback.
+      // If you want to fully sign out the UI when Firebase session disappears, uncomment:
+      // setCurrentUser(null); updateLoginUI(); // or redirect to login
+    }
+  } catch (err) {
+    console.error("onAuthStateChanged handler error:", err);
+  }
+});
 
 let shareCount = 0;
 let isRedeemed = false;
