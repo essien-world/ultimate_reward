@@ -207,6 +207,15 @@ async function submitGameAnswer(gameId, selectedAnswer) {
   }
 }
 
+// FIXED: Generate a reliable, unique redemption code
+function generateRedemptionCode() {
+  const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+  let code = 'GULD-';
+  for (let i = 0; i < 8; i++) {
+    code += chars.charAt(Math.floor(Math.random() * chars.length));
+  }
+  return code;
+}
 
 async function redeem({ phone, referral }) {
   const userRef = doc(db, "users", phone);
@@ -246,7 +255,8 @@ async function redeem({ phone, referral }) {
         }
       }
 
-      const code = `GULD-${Math.random().toString(36).slice(2, 8).toUpperCase()}`;
+      // FIXED: Use the reliable code generation function
+      const code = generateRedemptionCode();
       const addedPoints = 600;
       const newPoints = (u.points || 0) + addedPoints;
 
