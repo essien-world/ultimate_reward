@@ -1,4 +1,4 @@
-// firebase.js (module) - corrected
+// firebase.js (module) - corrected with your catch blocks
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
 import {
   getFirestore,
@@ -85,8 +85,13 @@ async function registerUser({ name, phone, password, state, lga, referral }) {
     await setDoc(docRef, record);
     return { success: true, record };
   } catch (err) {
-    console.error("registerUser error:", err);
-    return { success: false, message: err.code ? `${err.code}: ${err.message}` : String(err) };
+    console.error("REGISTER ERROR:", err);
+    alert(err.code + "\n" + err.message);
+
+    return {
+        success: false,
+        message: err.code + ": " + err.message
+    };
   }
 }
 
@@ -108,8 +113,13 @@ async function lookupPhone({ phone, password }) {
       return { success: false, message: err.code ? `${err.code}: ${err.message}` : String(err) };
     }
   } catch (err) {
-    console.error("lookupPhone error:", err);
-    return { success: false, message: err.code ? `${err.code}: ${err.message}` : String(err) };
+    console.error("REGISTER ERROR:", err);
+    alert(err.code + "\n" + err.message);
+
+    return {
+        success: false,
+        message: err.code + ": " + err.message
+    };
   }
 }
 
