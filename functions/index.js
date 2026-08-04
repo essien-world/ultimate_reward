@@ -30,7 +30,7 @@ exports.submitGame = functions.https.onCall(async (data, context) => {
     
     // Admin context bypasses regular Firestore security rules
     await userRef.update({
-      points: admin.firestore.FieldValue.increment(10),
+      points: admin.firestore.FieldValue.increment(100),
       gameCorrectToday: true
     });
 

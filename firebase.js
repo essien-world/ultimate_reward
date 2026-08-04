@@ -201,11 +201,11 @@ async function submitGameAnswer(gameId, selectedAnswer) {
     await updateDoc(userRef, {
       lastGameId: gameId,
       lastAnswer: selectedAnswer,
-      points: increment(10),
+      points: increment(100),
       gameCorrectToday: true
     });
 
-    alert("Correct answer! 10 points added to your account.");
+    alert("Correct answer! 100 points added to your account.");
   } catch (error) {
     // If the answer was wrong or user already played, Firestore rules block it here
     if (error.code === 'permission-denied') {
@@ -306,7 +306,7 @@ async function checkReferrerPoints({ referredByCode }) {
   if (snap.empty) return { success: true, meets: false, points: 0 };
   const refData = snap.docs[0].data();
   const points = refData.points || 0;
-  return { success: true, meets: points >= 10000, points };
+  return { success: true, meets: points >= 500, points };
 }
 
 /* Exports */
@@ -342,4 +342,5 @@ if (typeof window !== "undefined") {
   window.submitComment = submitComment;
   window.setPhoneVerified = setPhoneVerified;
   window.checkReferrerPoints = checkReferrerPoints;
+}
 }
