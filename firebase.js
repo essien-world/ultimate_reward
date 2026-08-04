@@ -1,4 +1,4 @@
-// firebase.js (module) - corrected with your catch blocks
+// firebase.js (module) - Cleaned & Fixed
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
 import {
   getFirestore,
@@ -13,6 +13,7 @@ import {
   addDoc,
   setDoc,
   updateDoc,
+  increment,
   serverTimestamp,
   runTransaction
 } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
@@ -23,7 +24,7 @@ import {
   signOut
 } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
 
-// Put your firebaseConfig here (same as you had)
+// Put your firebaseConfig here
 const firebaseConfig = {
   apiKey: "AIzaSyDG-g0DIQ9zv-hkfscSJ98oF0FXRcCkeYY",
   authDomain: "maamatz-quiz.firebaseapp.com",
@@ -38,11 +39,6 @@ const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 const auth = getAuth(app);
 
-/*
-  Helper functions that mirror the old apiCall actions.
-  For sensitive ops (redeem / awarding points) use cloud functions; the client-side transaction here is a simple example.
-*/
-
 async function registerUser({ name, phone, password, state, lga, referral }) {
   if (!phone || !password) {
     return { success: false, message: "Phone and password are required" };
@@ -51,14 +47,12 @@ async function registerUser({ name, phone, password, state, lga, referral }) {
   const email = `${phone}@gulder.local`; // local pseudo-email mapping for Firebase Auth
 
   try {
-    // Use the phone as document id to ensure uniqueness
     const docRef = doc(db, "users", phone);
     const snap = await getDoc(docRef);
     if (snap.exists()) {
       return { success: false, message: "Phone already registered" };
     }
 
-    // Create Auth user and wait for sign-in to complete
     let userCredential;
     try {
       userCredential = await createUserWithEmailAndPassword(auth, email, password);
@@ -67,12 +61,10 @@ async function registerUser({ name, phone, password, state, lga, referral }) {
       return { success: false, message: err.code ? `${err.code}: ${err.message}` : String(err) };
     }
 
-    // Force-refresh ID token so Firestore security rules see the correct request.auth token
     try {
       await userCredential.user.getIdToken(true);
     } catch (tokenErr) {
       console.warn("Failed to refresh ID token immediately after signup:", tokenErr);
-      // Not fatal — but without a token refresh the next Firestore write MAY be denied; return failure to be safe.
       return { success: false, message: "Failed to initialize auth token. Please try logging in." };
     }
 
@@ -82,7 +74,7 @@ async function registerUser({ name, phone, password, state, lga, referral }) {
       phone,
       state: state || "",
       lga: lga || "",
-      referral: uniqueRefCode, // generated referral code
+      referral: uniqueRefCode,
       referredBy: referral || "",
       points: 0,
       validReferrals: 0,
@@ -120,7 +112,7 @@ async function lookupPhone({ phone, password }) {
       return { success: false, message: err.code ? `${err.code}: ${err.message}` : String(err) };
     }
   } catch (err) {
-    console.error("REGISTER ERROR:", err);
+    console.error("LOGIN ERROR:", err);
     alert(err.code + "\n" + err.message);
 
     return {
@@ -136,7 +128,6 @@ async function getUserData({ phone }) {
   if (!snap.exists()) return { success: false, message: "User not found" };
   const data = snap.data();
 
-  // gather additional info (e.g., leaderboard data)
   return {
     success: true,
     points: data.points || 0,
@@ -180,7 +171,7 @@ async function submitGame({ phone, correctCount, roundNumber }) {
       const newPoints = (u.points || 0) + addedPoints;
 
       tx.update(userRef, { points: newPoints, lastGameAt: serverTimestamp(), gameCorrectToday: (u.gameCorrectToday || 0) + (correctCount || 0) });
-      const gameDocRef = await addDoc(gamesCol, { phone, correctCount, roundNumber, timestamp: serverTimestamp(), addedPoints });
+      await addDoc(gamesCol, { phone, correctCount, roundNumber, timestamp: serverTimestamp(), addedPoints });
       return { added: addedPoints, points: newPoints };
     });
     return { success: true, added: result.added, points: result.points, gameCorrectToday: (result.points || 0) };
@@ -188,16 +179,17 @@ async function submitGame({ phone, correctCount, roundNumber }) {
     console.error("submitGame error:", err);
     return { success: false, message: err.message || "Failed to submit game" };
   }
-  import { doc, updateDoc, increment } from "firebase/firestore";
-import { db, auth } from "./firebase.js";
+}
 
 async function submitGameAnswer(gameId, selectedAnswer) {
-  // Get logged-in user's phone number / ID
+  if (!auth.currentUser) {
+    alert("Please log in first!");
+    return;
+  }
   const userPhone = auth.currentUser.email.split('@')[0]; 
   const userRef = doc(db, "users", userPhone);
 
   try {
-    // Attempt to update the user document
     await updateDoc(userRef, {
       lastGameId: gameId,
       lastAnswer: selectedAnswer,
@@ -207,7 +199,6 @@ async function submitGameAnswer(gameId, selectedAnswer) {
 
     alert("Correct answer! 100 points added to your account.");
   } catch (error) {
-    // If the answer was wrong or user already played, Firestore rules block it here
     if (error.code === 'permission-denied') {
       alert("Incorrect answer or you have already completed today's game!");
     } else {
@@ -319,6 +310,7 @@ export {
   getUserData,
   submitBank,
   submitGame,
+  submitGameAnswer,
   redeem,
   getLeaderboard,
   submitComment,
@@ -337,10 +329,10 @@ if (typeof window !== "undefined") {
   window.getUserData = getUserData;
   window.submitBank = submitBank;
   window.submitGame = submitGame;
+  window.submitGameAnswer = submitGameAnswer;
   window.redeem = redeem;
   window.getLeaderboard = getLeaderboard;
   window.submitComment = submitComment;
   window.setPhoneVerified = setPhoneVerified;
   window.checkReferrerPoints = checkReferrerPoints;
-}
 }
