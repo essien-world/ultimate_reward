@@ -29,9 +29,6 @@ function setCurrentUser(user) { currentUser = user; try { window.currentUser = u
 }
 
 // script.js — robust onAuthStateChanged handler
-import { auth } from "./firebase.js";
-import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
-
 onAuthStateChanged(auth, async (fbUser) => {
   try {
     if (!fbUser) {
