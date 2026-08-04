@@ -58,13 +58,22 @@ async function registerUser({ name, phone, password, state, lga, referral }) {
       return { success: false, message: "Phone already registered" };
     }
 
-    // Create Auth user
+    // Create Auth user and wait for sign-in to complete
+    let userCredential;
     try {
-      await createUserWithEmailAndPassword(auth, email, password);
+      userCredential = await createUserWithEmailAndPassword(auth, email, password);
     } catch (err) {
-      // If auth creation fails because email already exists, abort
       console.error("Auth create user error:", err);
       return { success: false, message: err.code ? `${err.code}: ${err.message}` : String(err) };
+    }
+
+    // Force-refresh ID token so Firestore security rules see the correct request.auth token
+    try {
+      await userCredential.user.getIdToken(true);
+    } catch (tokenErr) {
+      console.warn("Failed to refresh ID token immediately after signup:", tokenErr);
+      // Not fatal — but without a token refresh the next Firestore write MAY be denied; return failure to be safe.
+      return { success: false, message: "Failed to initialize auth token. Please try logging in." };
     }
 
     const uniqueRefCode = `GULD${Math.random().toString(36).slice(2, 6).toUpperCase()}`;
@@ -86,11 +95,9 @@ async function registerUser({ name, phone, password, state, lga, referral }) {
     return { success: true, record };
   } catch (err) {
     console.error("REGISTER ERROR:", err);
-    alert(err.code + "\n" + err.message);
-
     return {
-        success: false,
-        message: err.code + ": " + err.message
+      success: false,
+      message: err.code ? `${err.code}: ${err.message}` : String(err)
     };
   }
 }
