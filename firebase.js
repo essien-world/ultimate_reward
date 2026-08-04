@@ -48,16 +48,15 @@ async function registerUser({ name, phone, password, state, lga, referral }) {
   const usersCol = collection(db, "users");
   const q = query(usersCol, where("phone", "==", phone), limit(1));
   const snap = await getDocs(q);
-  if (!snap.empty) {
-    return { success: false, message: "Phone already registered" };
-  }
-  const email = `${phone}@gulder.local`;
+  catch (err) {
+    console.error(err);
 
-await createUserWithEmailAndPassword(
-    auth,
-    email,
-    password
-);
+    return {
+        success: false,
+        message: err.code + " : " + err.message
+    };
+}
+
   const docRef = doc(db, "users", phone); // use phone as doc id
   const uniqueRefCode = `GULD${Math.random().toString(36).slice(2, 6).toUpperCase()}`;
   const record = {
@@ -91,10 +90,13 @@ try {
         email,
         password
     );
-} catch (err) {
+    
+catch (err) {
+    console.error(err);
+
     return {
         success: false,
-        message: "Invalid phone number or password"
+        message: err.code + " : " + err.message
     };
 }
 }
@@ -293,4 +295,5 @@ if (typeof window !== "undefined") {
   window.submitComment = submitComment;
   window.setPhoneVerified = setPhoneVerified;
   window.checkReferrerPoints = checkReferrerPoints;
+}
 }
