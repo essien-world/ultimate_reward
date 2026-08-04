@@ -1,4 +1,4 @@
-// firebase.js (module)
+// firebase.js (module) - corrected
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
 import {
   getFirestore,
@@ -44,61 +44,73 @@ const auth = getAuth(app);
 */
 
 async function registerUser({ name, phone, password, state, lga, referral }) {
-  // Ensure phone is unique
-  const usersCol = collection(db, "users");
-  const q = query(usersCol, where("phone", "==", phone), limit(1));
-  const snap = await getDocs(q);
-  catch (err) {
-    console.error(err);
+  if (!phone || !password) {
+    return { success: false, message: "Phone and password are required" };
+  }
 
-    return {
-        success: false,
-        message: err.code + " : " + err.message
+  const email = `${phone}@gulder.local`; // local pseudo-email mapping for Firebase Auth
+
+  try {
+    // Use the phone as document id to ensure uniqueness
+    const docRef = doc(db, "users", phone);
+    const snap = await getDoc(docRef);
+    if (snap.exists()) {
+      return { success: false, message: "Phone already registered" };
+    }
+
+    // Create Auth user
+    try {
+      await createUserWithEmailAndPassword(auth, email, password);
+    } catch (err) {
+      // If auth creation fails because email already exists, abort
+      console.error("Auth create user error:", err);
+      return { success: false, message: err.code ? `${err.code}: ${err.message}` : String(err) };
+    }
+
+    const uniqueRefCode = `GULD${Math.random().toString(36).slice(2, 6).toUpperCase()}`;
+    const record = {
+      name: name || "",
+      phone,
+      state: state || "",
+      lga: lga || "",
+      referral: uniqueRefCode, // generated referral code
+      referredBy: referral || "",
+      points: 0,
+      validReferrals: 0,
+      redeemCode: "",
+      phoneVerified: false,
+      createdAt: serverTimestamp()
     };
-}
 
-  const docRef = doc(db, "users", phone); // use phone as doc id
-  const uniqueRefCode = `GULD${Math.random().toString(36).slice(2, 6).toUpperCase()}`;
-  const record = {
-  name,
-  phone,
-  state: state || "",
-  lga: lga || "",
-  referral: uniqueRefCode, // <-- Assign the generated code here
-  referredBy: referral || "", // <-- Store who referred them (optional)
-  points: 0,
-  validReferrals: 0,
-  redeemCode: "",
-  phoneVerified: false,
-  createdAt: serverTimestamp()
-  };
-  await setDoc(docRef, record);
-  return { success: true, record };
+    await setDoc(docRef, record);
+    return { success: true, record };
+  } catch (err) {
+    console.error("registerUser error:", err);
+    return { success: false, message: err.code ? `${err.code}: ${err.message}` : String(err) };
+  }
 }
 
 async function lookupPhone({ phone, password }) {
+  if (!phone || !password) return { success: false, message: "Phone and password required" };
+
   const docRef = doc(db, "users", phone);
-  const snap = await getDoc(docRef);
-  if (!snap.exists()) return { success: false, message: "User not found" };
-  const data = snap.data();
-  // Simple check (mimics current system). For production use Firebase Auth.
-  const email = `${phone}@gulder.local`;
+  try {
+    const snap = await getDoc(docRef);
+    if (!snap.exists()) return { success: false, message: "User not found" };
+    const data = snap.data();
 
-try {
-    await signInWithEmailAndPassword(
-        auth,
-        email,
-        password
-    );
-    
-catch (err) {
-    console.error(err);
-
-    return {
-        success: false,
-        message: err.code + " : " + err.message
-    };
-}
+    const email = `${phone}@gulder.local`;
+    try {
+      await signInWithEmailAndPassword(auth, email, password);
+      return { success: true, record: data };
+    } catch (err) {
+      console.error("Auth sign-in failed:", err);
+      return { success: false, message: err.code ? `${err.code}: ${err.message}` : String(err) };
+    }
+  } catch (err) {
+    console.error("lookupPhone error:", err);
+    return { success: false, message: err.code ? `${err.code}: ${err.message}` : String(err) };
+  }
 }
 
 async function getUserData({ phone }) {
@@ -121,21 +133,23 @@ async function getUserData({ phone }) {
 
 async function submitBank({ phone, bankName, accountName, accountNumber }) {
   const docRef = doc(db, "users", phone);
-  await updateDoc(docRef, {
-    bankDetails: { bankName, accountName, accountNumber, savedAt: serverTimestamp() }
-  }).catch(async (err) => {
-    // If doc doesn't exist, create it
-    if (err.code === "not-found") {
+  try {
+    await updateDoc(docRef, {
+      bankDetails: { bankName, accountName, accountNumber, savedAt: serverTimestamp() }
+    });
+  } catch (err) {
+    if (err && err.code === "not-found") {
       await setDoc(docRef, { bankDetails: { bankName, accountName, accountNumber, savedAt: serverTimestamp() } }, { merge: true });
-    } else throw err;
-  });
+    } else {
+      throw err;
+    }
+  }
 
   const updated = await getDoc(docRef);
   return { success: true, bankDetails: updated.data().bankDetails };
 }
 
 async function submitGame({ phone, correctCount, roundNumber }) {
-  // simple transaction: increment points and record game entry
   const userRef = doc(db, "users", phone);
   const gamesCol = collection(db, "games");
 
@@ -160,7 +174,6 @@ async function submitGame({ phone, correctCount, roundNumber }) {
 }
 
 async function redeem({ phone, referral }) {
-  // Example: generate a redeem code for the user and ensure they haven't redeemed before.
   const userRef = doc(db, "users", phone);
   try {
     const result = await runTransaction(db, async (tx) => {
@@ -168,28 +181,22 @@ async function redeem({ phone, referral }) {
       if (!uSnap.exists()) throw new Error("User not found");
       const u = uSnap.data();
 
-      // If already has a redeemCode, return existing info (idempotent)
       if (u.redeemCode && u.redeemCode.length > 0) {
         return { already: true, code: u.redeemCode, points: u.points || 0, validReferrals: u.validReferrals || 0 };
       }
 
-      // generate redeem code and add points to the redeemer
       const code = `GULD-${Math.random().toString(36).slice(2, 8).toUpperCase()}`;
       const addedPoints = 600;
       const newPoints = (u.points || 0) + addedPoints;
 
-      // Prepare updates for the redeemer
       const userUpdates = {
         redeemCode: code,
         lastRedeemAt: serverTimestamp(),
         points: newPoints
       };
 
-      // If this user was referred and we haven't credited that referral yet,
-      // find the referrer and credit them 500 points (and increment validReferrals).
       let referrerValidReferrals = u.validReferrals || 0;
       if (u.referredBy && !u.referredByCredited) {
-        // find the referrer by referral code
         const usersCol = collection(db, "users");
         const q = query(usersCol, where("referral", "==", u.referredBy), limit(1));
         const refSnap = await getDocs(q);
@@ -200,14 +207,11 @@ async function redeem({ phone, referral }) {
           const refNewPoints = (refData.points || 0) + 500;
           referrerValidReferrals = (refData.validReferrals || 0) + 1;
 
-          // update referrer inside the same transaction
           tx.update(refRef, { points: refNewPoints, validReferrals: referrerValidReferrals });
-          // mark that the referred user's referrer has been credited
           userUpdates.referredByCredited = true;
         }
       }
 
-      // Update the redeemer
       tx.update(userRef, userUpdates);
 
       return { already: false, code, points: newPoints, validReferrals: referrerValidReferrals };
@@ -221,7 +225,6 @@ async function redeem({ phone, referral }) {
 }
 
 async function getLeaderboard() {
-  // read top 50 by points
   const usersCol = collection(db, "users");
   const q = query(usersCol, orderBy("points", "desc"), limit(50));
   const snap = await getDocs(q);
@@ -234,7 +237,6 @@ async function getLeaderboard() {
 }
 
 async function submitComment({ phone, name, comment }) {
-  // comments collection
   const commentsCol = collection(db, "comments");
   await addDoc(commentsCol, { phone, name, comment, createdAt: serverTimestamp() });
   return { success: true };
@@ -242,16 +244,19 @@ async function submitComment({ phone, name, comment }) {
 
 async function setPhoneVerified({ phone, verified }) {
   const docRef = doc(db, "users", phone);
-  await updateDoc(docRef, { phoneVerified: !!verified }).catch(async (err) => {
+  try {
+    await updateDoc(docRef, { phoneVerified: !!verified });
+  } catch (err) {
     if (err.code === "not-found") {
       await setDoc(docRef, { phoneVerified: !!verified }, { merge: true });
-    } else throw err;
-  });
+    } else {
+      throw err;
+    }
+  }
   return { success: true };
 }
 
 async function checkReferrerPoints({ referredByCode }) {
-  // Query user by referral code
   const usersCol = collection(db, "users");
   const q = query(usersCol, where("referral", "==", referredByCode), limit(1));
   const snap = await getDocs(q);
@@ -279,7 +284,6 @@ export {
 };
 
 // Compatibility: expose helpers to legacy/global scripts
-// (makes functions available as window.registerUser etc.)
 if (typeof window !== "undefined") {
   window.firebaseApp = app;
   window.firebaseDB = db;
@@ -295,5 +299,4 @@ if (typeof window !== "undefined") {
   window.submitComment = submitComment;
   window.setPhoneVerified = setPhoneVerified;
   window.checkReferrerPoints = checkReferrerPoints;
-}
 }
