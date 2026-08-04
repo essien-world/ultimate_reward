@@ -318,7 +318,7 @@ async function refreshUserData() {
     console.error("refreshUserData error:", err);
   }
 }
-```
+
 
 let shareCount = 0;
 let isRedeemed = false;
