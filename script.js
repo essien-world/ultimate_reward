@@ -28,297 +28,51 @@ function setCurrentUser(user) { currentUser = user; try { window.currentUser = u
 // Persist sanitized user to localStorage so login survives page reloads. // Do NOT store passwords or sensitive tokens. try { if (user) { const sanitized = Object.assign({}, user); // remove server-side password hash if present if (sanitized.passwordHash) delete sanitized.passwordHash; // Also remove any other sensitive props if present if (sanitized.password) delete sanitized.password; localStorage.setItem("gulder_current_user", JSON.stringify(sanitized)); } else { localStorage.removeItem("gulder_current_user"); } } catch (err) { console.warn("Failed to persist current user to localStorage:", err); } }
 }
 
-// script.js — application UI glue (uses new referral-claims flow)
-// Import firebase exports including processReferralClaims
-import { auth, registerUser, lookupPhone, getUserData, submitBank, submitGame, redeem, getLeaderboard, submitComment, setPhoneVerified, checkReferrerPoints, processReferralClaims } from "./firebase.js";
-import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
-
-// (rest of script – cleaned and focused on relevant auth + referral processing parts)
-
-// --- Application state & helpers
-let currentUser = null;
-function setCurrentUser(user) {
-  currentUser = user;
-  try { window.currentUser = user; } catch (e) {}
-  // persist sanitized user to localStorage so login survives page reloads
-  try {
-    if (user) {
-      const sanitized = Object.assign({}, user);
-      delete sanitized.password;
-      delete sanitized.passwordHash;
-      localStorage.setItem("gulder_current_user", JSON.stringify(sanitized));
-    } else {
-      localStorage.removeItem("gulder_current_user");
-    }
-  } catch (err) {
-    console.warn("Failed to persist current user", err);
-  }
-}
-
-function escapeHtml(str) {
-  if (!str) return "";
-  return String(str)
-    .replace(/&/g, "&amp;")
-    .replace(/"/g, "&quot;")
-    .replace(/'/g, "&#039;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;");
-}
-
-// --- Auth state handling (restore UI and automatically process claims for referrer)
+// script.js — robust onAuthStateChanged handler
 onAuthStateChanged(auth, async (fbUser) => {
   try {
     if (!fbUser) {
-      // no active firebase session — keep localStorage fallback (optional)
+      // no firebase user signed in — keep localStorage if you want an offline fallback
       return;
     }
 
     const phone = (fbUser.email || "").split("@")[0];
     if (!phone) return;
 
-    // fetch server user record with getUserData (returns name & referral)
-    let server = null;
-    try {
-      server = await getUserData({ phone });
-    } catch (err) {
-      console.warn("getUserData failed in onAuthStateChanged:", err);
-    }
+    // load persisted local user (optional)
+    let local = null;
+    try { local = JSON.parse(localStorage.getItem("gulder_current_user") || "null"); } catch (e) { local = null; }
+
+    // fetch full user record from backend (now includes name & referral)
+    const server = await apiCall({ action: "getUserData", phone });
 
     if (!server || !server.success) {
-      // fallback to persisted local user (if any)
-      try {
-        const stored = localStorage.getItem("gulder_current_user");
-        if (stored) {
-          const parsed = JSON.parse(stored);
-          if (parsed && parsed.phone === phone) {
-            setCurrentUser(parsed);
-            updateLoginUI();
-            await refreshUserData().catch(() => {});
-            return;
-          }
-        }
-      } catch (e) {}
-      // basic fallback
-      setCurrentUser({ phone });
+      // fallback to local if server call fails
+      const fallback = Object.assign({}, local || {}, { phone });
+      setCurrentUser(fallback);
       updateLoginUI();
       return;
     }
 
-    // merge and set current user
-    const merged = {
+    const merged = Object.assign({}, local || {}, {
       phone,
-      name: server.name || "",
-      referral: server.referral || "",
+      name: server.name || (local && local.name) || "",
+      referral: server.referral || (local && local.referral) || "",
       points: server.points || 0,
       validReferrals: server.validReferrals || 0,
       redeemCode: server.redeemCode || "",
       phoneVerified: !!server.phoneVerified,
-      bankDetails: server.bankDetails || null,
-      gameCorrectToday: server.gameCorrectToday || 0
-    };
+      gameCorrectToday: server.gameCorrectToday || 0,
+      bankDetails: server.bankDetails || null
+    });
 
     setCurrentUser(merged);
     updateLoginUI();
-
-    // Refresh UI with latest server data
-    await refreshUserData().catch(() => {});
-
-    // Automatically process referral claims if this user is a referrer
-    // (non-blocking; we refresh UI if any claims were processed)
-    try {
-      const pr = await processReferralClaims({ referrerPhone: merged.phone });
-      if (pr && pr.success && pr.processed > 0) {
-        console.info("Processed referral claims:", pr.processed);
-        await refreshUserData().catch(() => {});
-      }
-    } catch (e) {
-      console.warn("Auto-process claims failed:", e);
-    }
-
+    await refreshUserData().catch(e => console.warn("refreshUserData failed on auth change:", e));
   } catch (err) {
-    console.error("onAuthStateChanged error:", err);
+    console.error("onAuthStateChanged handler error:", err);
   }
 });
-
-// --- UI wiring (abbreviated; keep your original handlers but ensure they call the exported functions above)
-
-// Example: register form submit (uses registerUser export)
-document.addEventListener("DOMContentLoaded", () => {
-  // restore persisted UI user (if any) immediately
-  try {
-    const stored = localStorage.getItem("gulder_current_user");
-    if (stored) {
-      const parsed = JSON.parse(stored);
-      if (parsed && parsed.phone) {
-        setCurrentUser(parsed);
-        updateLoginUI();
-        refreshUserData().catch(() => {});
-      }
-    }
-  } catch (e) {}
-
-  // register form handler
-  const registerForm = document.getElementById("registerForm");
-  if (registerForm) {
-    registerForm.addEventListener("submit", async (e) => {
-      e.preventDefault();
-      const name = document.getElementById("name").value.trim();
-      const phone = document.getElementById("phone").value.trim();
-      const password = document.getElementById("regPassword").value;
-      const confirmPassword = document.getElementById("regConfirmPassword").value;
-      const urlParams = new URLSearchParams(window.location.search);
-      const refBy = urlParams.get("ref") || "";
-
-      if (password !== confirmPassword) {
-        alert("Passwords do not match!");
-        return;
-      }
-
-      const registerBtn = document.getElementById("registerBtn");
-      registerBtn.disabled = true;
-      registerBtn.textContent = "Registering...";
-
-      try {
-        const res = await registerUser({ name, phone, password, referral: refBy });
-        registerBtn.disabled = false;
-        registerBtn.textContent = "Register Now";
-
-        if (res && res.success) {
-          alert("Registration successful! Logging you in...");
-          // server returned record; we still rely on onAuthStateChanged to finish restoration.
-          setCurrentUser(res.record);
-          updateLoginUI();
-          await refreshUserData();
-        } else {
-          alert((res && res.message) || "Registration failed. Please try again.");
-        }
-      } catch (err) {
-        console.error("Register error:", err);
-        registerBtn.disabled = false;
-        registerBtn.textContent = "Register Now";
-        alert("Network error while registering. Please try again.");
-      }
-    });
-  }
-
-  // login handler (uses lookupPhone)
-  const loginForm = document.getElementById("loginForm");
-  if (loginForm) {
-    loginForm.addEventListener("submit", async (e) => {
-      e.preventDefault();
-      const phone = document.getElementById("loginPhone").value.trim();
-      const password = document.getElementById("loginPasswordInput").value;
-
-      try {
-        const res = await lookupPhone({ phone, password });
-        if (res && res.success) {
-          setCurrentUser(res.record);
-          updateLoginUI();
-          await refreshUserData();
-        } else {
-          alert((res && res.message) || "Login failed");
-        }
-      } catch (err) {
-        console.error("Login error:", err);
-        alert("Network error while logging in. Please try again.");
-      }
-    });
-  }
-
-  // redeem button handler (uses redeem export)
-  const redeemBtn = document.getElementById("redeemBtn");
-  if (redeemBtn) {
-    redeemBtn.addEventListener("click", async (e) => {
-      if (!currentUser) { alert("Please login first!"); return; }
-      if (currentUser.redeemCode) {
-        document.getElementById("redeemCodeInput").value = currentUser.redeemCode;
-        document.getElementById("redeemModal")?.classList.remove("hidden");
-        return;
-      }
-      // shareCount check omitted here to keep example minimal (your UI already enforces it)
-      try {
-        const res = await redeem({ phone: currentUser.phone, referral: currentUser.referredBy || "" });
-        if (res && res.success) {
-          currentUser.redeemCode = res.code;
-          setCurrentUser(currentUser);
-          await refreshUserData();
-          alert("Redeemed! Your code: " + res.code);
-        } else {
-          alert(res && res.message ? res.message : "Redeem failed");
-        }
-      } catch (err) {
-        console.error("Redeem click error:", err);
-        alert("Network error while redeeming. Please try again.");
-      }
-    });
-  }
-
-  // logout button (clear UI + sign out firebase)
-  const navLogoutBtn = document.getElementById("navLogoutBtn");
-  if (navLogoutBtn) {
-    navLogoutBtn.addEventListener("click", async () => {
-      try {
-        await signOut(auth);
-      } catch (e) {
-        console.warn("signOut failed:", e);
-      }
-      setCurrentUser(null);
-      document.getElementById("dashboardSection")?.classList.add("hidden");
-      document.getElementById("authSection")?.classList.remove("hidden");
-    });
-  }
-});
-
-// --- UI helpers used above
-function updateLoginUI() {
-  document.getElementById("authSection")?.classList.add("hidden");
-  document.getElementById("dashboardSection")?.classList.remove("hidden");
-  
-  if (document.getElementById("dashUserName") && currentUser) document.getElementById("dashUserName").textContent = currentUser.name || "";
-  if (document.getElementById("dashUserPhone") && currentUser) document.getElementById("dashUserPhone").textContent = currentUser.phone || "";
-  if (document.getElementById("dashRefCode") && currentUser) document.getElementById("dashRefCode").textContent = currentUser.referral || "---";
-
-  if (document.getElementById("navUserName") && currentUser) document.getElementById("navUserName").textContent = currentUser.name || "";
-  if (document.getElementById("navUserPhone") && currentUser) document.getElementById("navUserPhone").textContent = currentUser.phone || "";
-
-  document.getElementById("navUserDetails")?.classList.remove("hidden");
-  document.getElementById("navLoginBtn")?.classList.add("hidden");
-  document.getElementById("navLogoutBtn")?.classList.remove("hidden");
-}
-
-async function refreshUserData() {
-  if (!currentUser) return;
-  try {
-    const res = await getUserData({ phone: currentUser.phone });
-    if (res && res.success) {
-      if (document.getElementById("dashVisitors")) document.getElementById("dashVisitors").textContent = res.validReferrals;
-      if (document.getElementById("dashPoints")) document.getElementById("dashPoints").textContent = res.points;
-      if (document.getElementById("dashGameScore")) document.getElementById("dashGameScore").textContent = res.gameCorrectToday || 0;
-
-      if (res.redeemCode) {
-        currentUser.redeemCode = res.redeemCode;
-        setCurrentUser(currentUser);
-        if (document.getElementById("dashRedeemCodeDisplay")) document.getElementById("dashRedeemCodeDisplay").textContent = `Code: ${res.redeemCode}`;
-        const redeemBtn = document.getElementById("redeemBtn");
-        if (redeemBtn) redeemBtn.disabled = false;
-      }
-
-      // bank UI toggles
-      if (typeof res.bankDetails !== "undefined" && res.bankDetails && res.bankDetails.accountNumber) {
-        // show bank details
-        document.getElementById("bankDisplayName").textContent = res.bankDetails.bankName || "";
-        document.getElementById("bankDisplayAccount").textContent = res.bankDetails.accountName || "";
-        document.getElementById("bankDisplayNumber").textContent = res.bankDetails.accountNumber || "";
-        document.getElementById("bankDisplayInfo")?.classList.remove("hidden");
-      } else {
-        document.getElementById("bankDisplayInfo")?.classList.add("hidden");
-      }
-    }
-  } catch (err) {
-    console.error("refreshUserData error:", err);
-  }
-}
-
 
 let shareCount = 0;
 let isRedeemed = false;
