@@ -969,6 +969,46 @@ setTimeout(() => {
   });
 }
 
+/**
+ * Monitors an opened ad window for a required duration (in seconds).
+ * - If closed before duration: Cancels timer, restores button state, denies reward.
+ * - If 7 seconds elapse: Executes onSuccess callback regardless of tab state afterwards.
+ */
+function monitorAdPage({ adWindow, requiredSeconds = 7, buttonElement, originalText, onSuccess }) {
+  const startTime = Date.now();
+  
+  if (buttonElement) {
+    buttonElement.disabled = true;
+  }
+
+  const timerId = setInterval(() => {
+    const elapsed = (Date.now() - startTime) / 1000;
+    const remainingSeconds = Math.ceil(Math.max(0, requiredSeconds - elapsed));
+
+    // 1. Check if user closed the tab/window BEFORE 7 seconds
+    if (adWindow && adWindow.closed && elapsed < requiredSeconds) {
+      clearInterval(timerId);
+      if (buttonElement) {
+        buttonElement.disabled = false;
+        buttonElement.textContent = originalText;
+      }
+      alert(`You closed the ad page early! Please keep the page open for at least ${requiredSeconds} seconds to claim your reward.`);
+      return;
+    }
+
+    // Update countdown text on the button
+    if (buttonElement) {
+      buttonElement.textContent = `Verifying Page (${remainingSeconds}s)...`;
+    }
+
+    // 2. Target 7 seconds reached
+    if (elapsed >= requiredSeconds) {
+      clearInterval(timerId);
+      onSuccess();
+    }
+  }, 300); // Check every 300ms for fast detection of window closure
+}
+
 function updateShareUI(count) {
   const percentDisplay = document.getElementById("percentDisplay");
   const sharePercent = document.getElementById("sharePercent");
@@ -1195,19 +1235,14 @@ function setupRedeem() {
       return;
     }
 
-    redeemBtn.disabled = true;
-    document.getElementById("claimBtnText").textContent = `Verifying Page (${AD_REQUIRED_SECONDS}s)...`;
+    const originalText = "Redeem Reward";
 
-    const start = Date.now();
-    const checkInterval = 500;
-    
-    const timerId = setInterval(async () => {
-      const elapsed = (Date.now() - start) / 1000;
-      const displayTime = Math.ceil(Math.max(0, AD_REQUIRED_SECONDS - elapsed));
-      document.getElementById("claimBtnText").textContent = `Verifying Page (${displayTime}s)...`;
-
-      if (elapsed >= AD_REQUIRED_SECONDS) {
-        clearInterval(timerId);
+    monitorAdPage({
+      adWindow: win,
+      requiredSeconds: AD_REQUIRED_SECONDS, // 7
+      buttonElement: redeemBtn,
+      originalText: originalText,
+      onSuccess: async () => {
         document.getElementById("claimBtnText").textContent = "Processing...";
 
         try {
@@ -1234,16 +1269,16 @@ function setupRedeem() {
           } else {
             alert(res && res.message ? res.message : "Redemption failed.");
             redeemBtn.disabled = false;
-            document.getElementById("claimBtnText").textContent = "Redeem Reward";
+            document.getElementById("claimBtnText").textContent = originalText;
           }
         } catch (err) {
           console.error("Redeem error:", err);
           alert("Network error during redeem. Please try again.");
           redeemBtn.disabled = false;
-          document.getElementById("claimBtnText").textContent = "Redeem Reward";
+          document.getElementById("claimBtnText").textContent = originalText;
         }
       }
-    }, checkInterval);
+    });
   });
 
   closeModal?.addEventListener("click", () => {
@@ -1590,29 +1625,15 @@ function handleWatchAdReplay() {
 
   const watchAdBtn = document.getElementById("btnWatchAdGame");
   const persistentAdBtn = document.getElementById("btnPersistentAdGame");
-  
-  if (watchAdBtn) {
-    watchAdBtn.disabled = true;
-    watchAdBtn.textContent = `Verifying Page (${AD_REQUIRED_SECONDS}s)...`;
-  }
-  if (persistentAdBtn) {
-    persistentAdBtn.disabled = true;
-    persistentAdBtn.textContent = `Verifying Page (${AD_REQUIRED_SECONDS}s)...`;
-  }
+  const activeBtn = watchAdBtn || persistentAdBtn;
+  const originalText = "Watch sponsor ads to play again for today";
 
-  const start = Date.now();
-  const checkInterval = 500;
-  
-  const timerId = setInterval(() => {
-    const elapsed = (Date.now() - start) / 1000;
-    const displayTime = Math.ceil(Math.max(0, AD_REQUIRED_SECONDS - elapsed));
-    
-    if (watchAdBtn) watchAdBtn.textContent = `Verifying Page (${displayTime}s)...`;
-    if (persistentAdBtn) persistentAdBtn.textContent = `Verifying Page (${displayTime}s)...`;
-
-    if (elapsed >= AD_REQUIRED_SECONDS) {
-      clearInterval(timerId);
-      
+  monitorAdPage({
+    adWindow: win,
+    requiredSeconds: AD_REQUIRED_SECONDS, // 7
+    buttonElement: activeBtn,
+    originalText: originalText,
+    onSuccess: () => {
       currentGameRound = 2;
       completedUnits[2] = { gulder: false, general: false, sports: false };
       submittedRounds[2] = false;
@@ -1637,7 +1658,7 @@ function handleWatchAdReplay() {
 
       alert("Advert approved! Round 2 is unlocked — play all 3 units again.");
     }
-  }, checkInterval);
+  });
 }
 
 function getTodayKey() {
