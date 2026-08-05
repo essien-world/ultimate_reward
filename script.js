@@ -905,8 +905,8 @@ function setupWhatsAppShare() {
       return;
     }
 
+    // increment shareCount and update UI immediately
     shareCount = Math.min(6, shareCount + 1);
-
     updateShareUI(shareCount);
 
     const shareUrl = `${window.location.origin}${window.location.pathname}?ref=${encodeURIComponent(currentUser.referral || currentUser.phone)}`;
@@ -926,7 +926,43 @@ Please register through my link/code below, it will be credited to my referral, 
 ${shareUrl}`;
 
     const text = encodeURIComponent(message);
-    window.open(`https://api.whatsapp.com/send?text=${text}`, "_blank");
+
+    // Open a blank popup immediately to avoid popup blockers.
+    const win = window.open('', '_blank');
+    if (!win) {
+      alert("Pop-up blocked! Please allow pop-ups for this site to share on WhatsApp.");
+      return;
+    }
+
+    // Show the top banner visually before navigating the popup.
+    // element id in HTML: "first-banner"
+    const banner = document.getElementById("first-banner");
+    if (banner) {
+      try {
+        // Scroll banner into view smoothly
+        banner.scrollIntoView({ behavior: "smooth", block: "start" });
+
+        // Add a temporary highlight so users notice the banner
+        const prevOutline = banner.style.outline;
+        banner.style.transition = "box-shadow 300ms ease, outline 300ms ease";
+        banner.style.outline = "3px solid rgba(212,175,55,0.9)";
+        banner.style.boxShadow = "0 8px 24px rgba(0,0,0,0.5)";
+
+        // After short delay, remove highlight
+        setTimeout(() => {
+          banner.style.outline = prevOutline || "";
+          banner.style.boxShadow = "";
+        }, 900);
+      } catch (e) {
+        console.warn("Failed to highlight first banner:", e);
+      }
+    }
+
+    // Wait a short moment so the banner scroll/highlight is visible, then navigate the opened window.
+    // Because we already opened the window on the user gesture, this navigation will not be blocked.
+    setTimeout(() => {
+      win.location.href = `https://api.whatsapp.com/send?text=${text}`;
+    }, 700);
   });
 }
 
