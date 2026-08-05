@@ -288,6 +288,7 @@ async function redeem({ phone, referral }) {
     });
   }
 }
+    }
 
     return { success: true, code: result.code, points: result.points, already: result.already || false };
   } catch (err) {
