@@ -273,6 +273,10 @@ async function redeem({ phone, referral }) {
         const refDoc = refSnap.docs[0];
         const refPhone = refDoc.id;
         const refEmail = `${refPhone}@gulder.local`;
+        // DEFENSIVE: Do not create a referral claim where the referrer equals the referred phone
+  if (refPhone === phone) {
+    console.warn("Skipping self-referral claim for phone:", phone);
+  } else {  
 
         const claimsCol = collection(db, "referral_claims");
         await addDoc(claimsCol, {
