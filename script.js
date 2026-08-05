@@ -927,7 +927,7 @@ function setupWhatsAppShare() {
       alert("Please log in to have this share count toward your energy. The banner is shown now.");
       // open WhatsApp share but do not increment shareCount or change UI
       const shareUrlAnon = `${window.location.origin}${window.location.pathname}`;
-      const messageAnon = `🍺 The Ultimate Search is Back! 🔥\nVisit: ${shareUrlAnon}`;
+      const messageAnon = `🍺 The Gulder Ultimate Promo! 🔥\nVisit: ${shareUrlAnon}`;
       const textAnon = encodeURIComponent(messageAnon);
       const winAnon = window.open('', '_blank');
       if (!winAnon) {
@@ -947,15 +947,15 @@ function setupWhatsAppShare() {
     const shareUrl = `${window.location.origin}${window.location.pathname}?ref=${encodeURIComponent(currentUser.referral || currentUser.phone)}`;
 
     const message = [
-  "🍺 The Ultimate Search is Back! 🔥",
+  "🍺 The Gulder Ultimate Promo! 🔥",
   "(The Online Quest)",
   "The wait is over! Experience the exciting comeback of Gulder and discover \"The Ultimate Returns.\"",
   "🎁 Visit the link below to:",
   "✅ Get your unique participation code.",
   "✅ Stand a chance to win ₦50,000, a phone, laptop, ₦5m & a brand new car.",
-  "",
-  "Please register through my link/code below — it will be credited to my referral.",
-  "",
+  "✅ Also check the CROWN CORK for prices.",
+  "Please register through my link/code below — Let me get 500 points.",
+  
   shareUrl    // <-- URL on its own line
 ].join("\n");
 
