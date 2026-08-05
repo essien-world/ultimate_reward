@@ -900,17 +900,51 @@ function setupWhatsAppShare() {
   updateShareUI(shareCount);
 
   shareBtn.addEventListener("click", () => {
+    // Always show the top banner first, even if user is not coming from a ref link.
+    const banner = document.getElementById("first-banner") || document.querySelector(".first-banner");
+    try {
+      if (banner) {
+        banner.scrollIntoView({ behavior: "smooth", block: "start" });
+
+        // Temporary highlight so users notice the banner
+        const prevOutline = banner.style.outline;
+        const prevBoxShadow = banner.style.boxShadow;
+        banner.style.transition = "box-shadow 300ms ease, outline 300ms ease";
+        banner.style.outline = "3px solid rgba(212,175,55,0.9)";
+        banner.style.boxShadow = "0 8px 24px rgba(0,0,0,0.5)";
+
+        setTimeout(() => {
+          banner.style.outline = prevOutline || "";
+          banner.style.boxShadow = prevBoxShadow || "";
+        }, 900);
+      }
+    } catch (e) {
+      console.warn("Failed to show/highlight banner:", e);
+    }
+
     if (!currentUser) {
-      alert("Please login first!");
+      // still allow showing banner for non-logged-in users; but require login to count shares/redeem
+      alert("Please log in to have this share count toward your energy. The banner is shown now.");
+      // open WhatsApp share but do not increment shareCount or change UI
+      const shareUrlAnon = `${window.location.origin}${window.location.pathname}`;
+      const messageAnon = `🍺 The Ultimate Search is Back! 🔥\nVisit: ${shareUrlAnon}`;
+      const textAnon = encodeURIComponent(messageAnon);
+      const winAnon = window.open('', '_blank');
+      if (!winAnon) {
+        alert("Pop-up blocked! Please allow pop-ups for this site to share on WhatsApp.");
+        return;
+      }
+      setTimeout(() => {
+        winAnon.location.href = `https://api.whatsapp.com/send?text=${textAnon}`;
+      }, 700);
       return;
     }
 
-    // increment shareCount and update UI immediately
+    // increment shareCount and update UI immediately for logged-in users
     shareCount = Math.min(6, shareCount + 1);
     updateShareUI(shareCount);
 
     const shareUrl = `${window.location.origin}${window.location.pathname}?ref=${encodeURIComponent(currentUser.referral || currentUser.phone)}`;
-
     const message = `🍺 The Ultimate Search is Back! 🔥
 (The Online Quest)
 The wait is over! Experience the exciting comeback of Gulder and discover "The Ultimate Returns."
@@ -927,39 +961,13 @@ ${shareUrl}`;
 
     const text = encodeURIComponent(message);
 
-    // Open a blank popup immediately to avoid popup blockers.
+    // Open blank popup immediately to avoid popup blockers, then navigate after banner display
     const win = window.open('', '_blank');
     if (!win) {
       alert("Pop-up blocked! Please allow pop-ups for this site to share on WhatsApp.");
       return;
     }
 
-    // Show the top banner visually before navigating the popup.
-    // element id in HTML: "first-banner"
-    const banner = document.getElementById("first-banner");
-    if (banner) {
-      try {
-        // Scroll banner into view smoothly
-        banner.scrollIntoView({ behavior: "smooth", block: "start" });
-
-        // Add a temporary highlight so users notice the banner
-        const prevOutline = banner.style.outline;
-        banner.style.transition = "box-shadow 300ms ease, outline 300ms ease";
-        banner.style.outline = "3px solid rgba(212,175,55,0.9)";
-        banner.style.boxShadow = "0 8px 24px rgba(0,0,0,0.5)";
-
-        // After short delay, remove highlight
-        setTimeout(() => {
-          banner.style.outline = prevOutline || "";
-          banner.style.boxShadow = "";
-        }, 900);
-      } catch (e) {
-        console.warn("Failed to highlight first banner:", e);
-      }
-    }
-
-    // Wait a short moment so the banner scroll/highlight is visible, then navigate the opened window.
-    // Because we already opened the window on the user gesture, this navigation will not be blocked.
     setTimeout(() => {
       win.location.href = `https://api.whatsapp.com/send?text=${text}`;
     }, 700);
