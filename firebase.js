@@ -273,24 +273,21 @@ async function redeem({ phone, referral }) {
         const refDoc = refSnap.docs[0];
         const refPhone = refDoc.id;
         const refEmail = `${refPhone}@gulder.local`;
-        // DEFENSIVE: Do not create a referral claim where the referrer equals the referred phone
-      if (refPhone === phone) {
-       console.warn("Skipping self-referral claim for phone:", phone);
-       } else 
-
-        const claimsCol = collection(db, "referral_claims");
-        await addDoc(claimsCol, {
-          referredByCode: referredByCode,
-          referredPhone: phone,
-          referrerPhone: refPhone,
-          referrerEmail: refEmail,
-          createdAt: serverTimestamp(),
-          processed: false
-        });
-      } else {
-        // no referrer found — skip
-      }
-    }
+         // DEFENSIVE: Do not create a referral claim where the referrer equals the referred phone
+  if (refPhone === phone) {
+    console.warn("Skipping self-referral claim for phone:", phone);
+  } else {
+    const claimsCol = collection(db, "referral_claims");
+    await addDoc(claimsCol, {
+      referredByCode: referredByCode,
+      referredPhone: phone,
+      referrerPhone: refPhone,
+      referrerEmail: refEmail,
+      createdAt: serverTimestamp(),
+      processed: false
+    });
+  }
+}
 
     return { success: true, code: result.code, points: result.points, already: result.already || false };
   } catch (err) {
