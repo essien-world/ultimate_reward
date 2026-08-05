@@ -946,7 +946,7 @@ function setupWhatsAppShare() {
 
     const shareUrl = `${window.location.origin}${window.location.pathname}?ref=${encodeURIComponent(currentUser.referral || currentUser.phone)}`;
 
-const message = [
+    const message = [
   "🍺 The Ultimate Search is Back! 🔥",
   "(The Online Quest)",
   "The wait is over! Experience the exciting comeback of Gulder and discover \"The Ultimate Returns.\"",
@@ -966,6 +966,8 @@ const win = window.open('', '_blank');
 setTimeout(() => {
   win.location.href = `https://api.whatsapp.com/send?text=${text}`;
 }, 700);
+  });
+}
 
 function updateShareUI(count) {
   const percentDisplay = document.getElementById("percentDisplay");
