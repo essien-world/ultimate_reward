@@ -7,8 +7,8 @@ const AD_WAIT_MS = 7000;
 
 // Pre-generated 10 comments (will display 5 at a time and rotate)
 const PRESET_COMMENTS = [
-  { name: "Amaka O.", text: "20 seconds is too short.", time: "" },
-  { name: "Tunde A.", text: "i was not even able to answer all the questions.", time: "" },
+  { name: "Amaka O.", text: "20 seconds is too short. this is serious", time: "" },
+  { name: "Tunde A.", text: "i was able to answer all the questions.", time: "" },
   { name: "Chinelo M.", text: "first round was difficult, i had only 4 correct answers, na second round i come get 9 correct answers.", time: "" },
   { name: "Ibrahim S.", text: "gulder unit is very hard. i will come back tomorrow. stronger", time: "" },
   { name: "Grace N.", text: "i watch the ads after the first round expecting same questions in second round, but na new questions entirely.", time: "" },
