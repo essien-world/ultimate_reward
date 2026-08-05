@@ -993,7 +993,7 @@ function monitorAdPage({ adWindow, requiredSeconds = 7, buttonElement, originalT
         const targetTextEl = buttonElement.querySelector("#claimBtnText") || buttonElement;
         targetTextEl.textContent = originalText;
       }
-      alert(`You closed the ad page early! Please keep the page open for at least ${requiredSeconds} seconds to claim your reward.`);
+      alert(`Please keep the page open for at least ${requiredSeconds} seconds to generate the required code.`);
       return;
     }
 
