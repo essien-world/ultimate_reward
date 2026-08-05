@@ -1,5 +1,5 @@
 /* Gulder Ultimate V3.1 Premium Design Additions (updated for responsive menu) */
-body { padding-top: 0px; /* reserve space for the fixed .menu (menu height = 64px) */ }
+body { padding-top: 60px; /* reserve space for the fixed .menu (menu height = 64px) */ }
 
 :root {
   --bg-black: #0B0B0B;
