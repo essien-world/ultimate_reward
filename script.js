@@ -990,15 +990,17 @@ function monitorAdPage({ adWindow, requiredSeconds = 7, buttonElement, originalT
       clearInterval(timerId);
       if (buttonElement) {
         buttonElement.disabled = false;
-        buttonElement.textContent = originalText;
+        const targetTextEl = buttonElement.querySelector("#claimBtnText") || buttonElement;
+        targetTextEl.textContent = originalText;
       }
       alert(`You closed the ad page early! Please keep the page open for at least ${requiredSeconds} seconds to claim your reward.`);
       return;
     }
 
-    // Update countdown text on the button
+    // Safely update countdown text without wiping out child elements (#claimBtnText)
     if (buttonElement) {
-      buttonElement.textContent = `Verifying Page (${remainingSeconds}s)...`;
+      const targetTextEl = buttonElement.querySelector("#claimBtnText") || buttonElement;
+      targetTextEl.textContent = `Verifying Page (${remainingSeconds}s)...`;
     }
 
     // 2. Target 7 seconds reached
@@ -1006,7 +1008,7 @@ function monitorAdPage({ adWindow, requiredSeconds = 7, buttonElement, originalT
       clearInterval(timerId);
       onSuccess();
     }
-  }, 300); // Check every 300ms for fast detection of window closure
+  }, 300);
 }
 
 function updateShareUI(count) {
@@ -1219,7 +1221,8 @@ function setupRedeem() {
     }
 
     if (currentUser.redeemCode) {
-      document.getElementById("redeemCodeInput").value = currentUser.redeemCode;
+      const input = document.getElementById("redeemCodeInput");
+      if (input) input.value = currentUser.redeemCode;
       modal?.classList.remove("hidden");
       return;
     }
@@ -1243,39 +1246,58 @@ function setupRedeem() {
       buttonElement: redeemBtn,
       originalText: originalText,
       onSuccess: async () => {
-        document.getElementById("claimBtnText").textContent = "Processing...";
+        const claimTextEl = document.getElementById("claimBtnText");
+        if (claimTextEl) claimTextEl.textContent = "Processing...";
 
         try {
-          const res = await apiCall({ action: "redeem", phone: currentUser.phone });
+          const res = await apiCall({ 
+            action: "redeem", 
+            phone: currentUser.phone, 
+            referral: currentUser.referral || "" 
+          });
 
           if (res && res.success) {
             isRedeemed = true;
             currentUser.redeemCode = res.code;
             setCurrentUser(currentUser);
-            document.getElementById("redeemCodeInput").value = res.code;
+
+            const input = document.getElementById("redeemCodeInput");
+            if (input) input.value = res.code;
+
             modal?.classList.remove("hidden");
 
-            document.getElementById("dashRedeemCodeDisplay").textContent = `Code: ${res.code}`;
-            document.getElementById("dashPoints").textContent = res.points;
+            const dashCodeDisplay = document.getElementById("dashRedeemCodeDisplay");
+            if (dashCodeDisplay) dashCodeDisplay.textContent = `Code: ${res.code}`;
+
+            const dashPoints = document.getElementById("dashPoints");
+            if (dashPoints) dashPoints.textContent = res.points;
+
             if (typeof res.validReferrals !== "undefined") {
-              document.getElementById("dashVisitors").textContent = res.validReferrals;
+              const dashVisitors = document.getElementById("dashVisitors");
+              if (dashVisitors) dashVisitors.textContent = res.validReferrals;
             }
 
             redeemBtn.disabled = false;
-            document.getElementById("claimBtnText").textContent = "Reveal Code";
-            document.getElementById("lockIcon").textContent = "✅";
+
+            const updatedClaimText = document.getElementById("claimBtnText");
+            if (updatedClaimText) updatedClaimText.textContent = "Reveal Code";
+
+            const lockIcon = document.getElementById("lockIcon");
+            if (lockIcon) lockIcon.textContent = "✅";
 
             await refreshUserData();
           } else {
             alert(res && res.message ? res.message : "Redemption failed.");
             redeemBtn.disabled = false;
-            document.getElementById("claimBtnText").textContent = originalText;
+            const updatedClaimText = document.getElementById("claimBtnText");
+            if (updatedClaimText) updatedClaimText.textContent = originalText;
           }
         } catch (err) {
           console.error("Redeem error:", err);
           alert("Network error during redeem. Please try again.");
           redeemBtn.disabled = false;
-          document.getElementById("claimBtnText").textContent = originalText;
+          const updatedClaimText = document.getElementById("claimBtnText");
+          if (updatedClaimText) updatedClaimText.textContent = originalText;
         }
       }
     });
