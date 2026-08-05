@@ -945,34 +945,27 @@ function setupWhatsAppShare() {
     updateShareUI(shareCount);
 
     const shareUrl = `${window.location.origin}${window.location.pathname}?ref=${encodeURIComponent(currentUser.referral || currentUser.phone)}`;
-    const message = `🍺 The Ultimate Search is Back! 🔥
-(The Online Quest)
-The wait is over! Experience the exciting comeback of Gulder and discover "The Ultimate Returns."
-🎁 Visit the link below to:
-✅ Get your unique participation code.
-✅ Stand a chance to win ₦50,000  
-        Phone, Laptop, ₦5m & A Brand New Car.
-✅ Watch the exclusive comeback story.
-✅ ONE CODE = ONE PERSON.
 
-Please register through my link/code below, it will be credited to my referral, and you'll receive your own code to share with others too.
-👇 Tap here to get started:
-${shareUrl}`;
+const message = [
+  "🍺 The Ultimate Search is Back! 🔥",
+  "(The Online Quest)",
+  "The wait is over! Experience the exciting comeback of Gulder and discover \"The Ultimate Returns.\"",
+  "🎁 Visit the link below to:",
+  "✅ Get your unique participation code.",
+  "✅ Stand a chance to win ₦50,000, a phone, laptop, ₦5m & a brand new car.",
+  "",
+  "Please register through my link/code below — it will be credited to my referral.",
+  "",
+  shareUrl    // <-- URL on its own line
+].join("\n");
 
-    const text = encodeURIComponent(message);
+const text = encodeURIComponent(message);
 
-    // Open blank popup immediately to avoid popup blockers, then navigate after banner display
-    const win = window.open('', '_blank');
-    if (!win) {
-      alert("Pop-up blocked! Please allow pop-ups for this site to share on WhatsApp.");
-      return;
-    }
-
-    setTimeout(() => {
-      win.location.href = `https://api.whatsapp.com/send?text=${text}`;
-    }, 700);
-  });
-}
+// open as before
+const win = window.open('', '_blank');
+setTimeout(() => {
+  win.location.href = `https://api.whatsapp.com/send?text=${text}`;
+}, 700);
 
 function updateShareUI(count) {
   const percentDisplay = document.getElementById("percentDisplay");
