@@ -1250,11 +1250,10 @@ function setupRedeem() {
         if (claimTextEl) claimTextEl.textContent = "Processing...";
 
         try {
-          const res = await apiCall({ 
-            action: "redeem", 
-            phone: currentUser.phone, 
-            referral: currentUser.referral || "" 
-          });
+          const res = await apiCall({
+              action: "redeem",
+              phone: currentUser.phone
+              });
 
           if (res && res.success) {
             isRedeemed = true;
