@@ -1845,7 +1845,7 @@ function setupMandatoryVerificationButton() {
       alert("This verification is locked. It will be available once the referrer has met the verification threshold.");
       return;
     }
-    window.open("https://www.livescores.com", "_blank");
+    window.open("https://omg10.com/4/11176773", "_blank");
   });
 }
 
