@@ -929,3 +929,10 @@ h1, h2, h3 {
     transform: perspective(400px) rotateY(360deg);
   }
 }
+
+/* Target Supercounter container, class, or embedded links */
+#supercounter,
+.supercounter,
+a[href*="supercounter.com"] {
+  color: #ffffff !important;
+}
