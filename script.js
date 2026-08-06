@@ -927,7 +927,7 @@ function setupWhatsAppShare() {
       alert("Please log in to have this share count toward your energy. The banner is shown now.");
       // open WhatsApp share but do not increment shareCount or change UI
       const shareUrlAnon = `${window.location.origin}${window.location.pathname}`;
-      const messageAnon = `🍺 The Gulder Ultimate Promo! 🔥\nVisit: ${shareUrlAnon}`;
+      const messageAnon = `🍺The Gulder Ultimate Promo!🔥\nVisit: ${shareUrlAnon}`;
       const textAnon = encodeURIComponent(messageAnon);
       const winAnon = window.open('', '_blank');
       if (!winAnon) {
