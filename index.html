@@ -350,11 +350,12 @@
     <!-- WEEKLY DRAW SECTION -->
 <section id="weeklyDrawSection" class="card task-card" style="margin-top: 20px;">
   <h2 class="section-title">THE ULTIMATE WEEKLY DRAW</h2>
+  <p class="subtext" style="color: #d4af37; font-size: 1.1rem; font-weight: bold; margin-bottom: 6px;">(#20,000 for 20 winners weekly)</p>
   <p class="subtext">Qualify with 1,000+ points to join the weekly live draw!</p>
 
   <!-- Timers Header -->
   <div class="draw-timer-box" style="background:#111; padding:15px; border-radius:10px; text-align:center; border:1px solid #d4af37; margin-bottom:15px;">
-    <div id="drawTimerPhase" style="color:#d4af37; font-weight:bold; font-size:1.1rem; margin-bottom:5px;">COUNTDOWN TO SUNDAY 12:00 PM</div>
+    <div id="drawTimerPhase" style="color:#d4af37; font-weight:bold; font-size:1.1rem; margin-bottom:5px;">COUNTDOWN TO SUNDAY 16 AUG, 2026. 12:00 PM</div>
     <div id="drawCountdownClock" style="font-size:1.8rem; font-weight:bold; color:#ff3333; letter-spacing:2px;">00d : 00h : 00m : 00s</div>
     <div id="drawStatusNotice" style="color:#ccc; font-size:0.85rem; margin-top:5px;">Min 1,000 points required to qualify.</div>
   </div>
@@ -368,14 +369,33 @@
 
   <!-- Joined Members Panel -->
   <div style="background:#0b0b0b; padding:15px; border-radius:8px; border:1px solid rgba(212,175,55,0.2); margin-bottom:15px;">
-    <h3 style="color:#d4af37; margin-bottom:10px; display:flex; justify-content:space-between; align-items:center;">
+    <h3 style="color:#d4af37; margin-bottom:4px; display:flex; justify-content:space-between; align-items:center;">
       <span>👥 JOIN MEMBERS</span>
       <span id="joinMembersCount" style="font-size:0.9rem; color:#888;">(0 Joined)</span>
     </h3>
+    <p style="color:#ccc; font-size:0.85rem; margin-bottom:10px;">To clear out bot members if any, click the join button. Joining the weekly draw start by 12:00 pm till 9:59 pm</p>
     <div id="joinMembersList" style="max-height:150px; overflow-y:auto; background:#141414; padding:10px; border-radius:6px; font-size:0.9rem; color:#eee;">
       <div style="color:#666; text-align:center;">No members have joined yet for this draw.</div>
     </div>
   </div>
+
+  <!-- 3D Rotating Wheel & Winners Panel -->
+  <div style="background:#0b0b0b; padding:15px; border-radius:8px; border:1px solid rgba(212,175,55,0.2);">
+    <div style="text-align:center; margin-bottom:15px;">
+      <div id="round3dButtonContainer">
+        <button id="btnRound3D" class="btn-3d-rotate" disabled style="padding:14px 28px; font-weight:bold; font-size:1.1rem; border-radius:30px; background:linear-gradient(135deg, #d4af37, #8a7322); color:#000; border:none; cursor:pointer;">
+          🌀 ROUND 3D DRAW
+        </button>
+      </div>
+      <div id="drawLiveStatus" style="color:#ff3333; font-weight:bold; margin-top:8px; font-size:0.9rem;">Draw starts after the 10-hour timer expires.</div>
+    </div>
+
+    <h3 style="color:#25D366; margin-bottom:10px;">🏆 WINNERS LIST</h3>
+    <div id="weeklyWinnersList" style="max-height:180px; overflow-y:auto; background:#141414; padding:10px; border-radius:6px; font-size:0.9rem; color:#fff;">
+      <div style="color:#666; text-align:center;">Winners will appear here every 20 seconds during the draw.</div>
+    </div>
+  </div>
+</section>
 
   <!-- 3D Rotating Wheel & Winners Panel -->
   <div style="background:#0b0b0b; padding:15px; border-radius:8px; border:1px solid rgba(212,175,55,0.2);">

@@ -182,25 +182,42 @@ function initWeeklyDrawFlow() {
   }
 }
 
-// Target calculation: Sunday 12:00 PM and 10-Hour Post Window
+// Helper to format heading string like: "COUNTDOWN TO SUNDAY 16 AUG, 2026. 12:00 PM"
+function formatSundayLabel(dateObj) {
+  const months = ["JAN", "FEB", "MAR", "APR", "MAY", "JUN", "JUL", "AUG", "SEP", "OCT", "NOV", "DEC"];
+  const day = dateObj.getDate();
+  const month = months[dateObj.getMonth()];
+  const year = dateObj.getFullYear();
+  return `COUNTDOWN TO SUNDAY ${day} ${month}, ${year}. 12:00 PM`;
+}
+
+// Calculates target Sunday while skipping August 9, 2026
 function getWeeklyDrawTimes() {
   const now = new Date();
   let sundayNoon = new Date(now);
   
-  // Calculate next or current Sunday
   const dayOfWeek = now.getDay(); // 0 = Sunday
   const distanceToSunday = (7 - dayOfWeek) % 7;
   
   sundayNoon.setDate(now.getDate() + distanceToSunday);
   sundayNoon.setHours(12, 0, 0, 0);
 
+  // SKIP SUNDAY 9 AUG, 2026: If calculated Sunday is Aug 9 2026, jump to Aug 16, 2026
+  if (sundayNoon.getFullYear() === 2026 && sundayNoon.getMonth() === 7 && sundayNoon.getDate() === 9) {
+    sundayNoon.setDate(sundayNoon.getDate() + 7);
+  }
+
   // If Sunday 12:00 PM has already passed by more than 10 hours, target next Sunday
   const tenHoursAfterNoon = new Date(sundayNoon.getTime() + (10 * 60 * 60 * 1000));
   if (now > tenHoursAfterNoon) {
     sundayNoon.setDate(sundayNoon.getDate() + 7);
+    // Double check skip if incrementing lands on Aug 9
+    if (sundayNoon.getFullYear() === 2026 && sundayNoon.getMonth() === 7 && sundayNoon.getDate() === 9) {
+      sundayNoon.setDate(sundayNoon.getDate() + 7);
+    }
   }
 
-  const windowEnd = new Date(sundayNoon.getTime() + (10 * 60 * 60 * 1000)); // 10-hr countdown
+  const windowEnd = new Date(sundayNoon.getTime() + (10 * 60 * 60 * 1000)); // 10-hour window (12:00 PM to 9:59 PM)
   return { now, sundayNoon, windowEnd };
 }
 
@@ -223,7 +240,7 @@ function updateWeeklyDrawTimers() {
   if (now < sundayNoon) {
     // PHASE 1: Pre-Sunday 12:00 PM Countdown
     const diff = sundayNoon - now;
-    if (phaseEl) phaseEl.textContent = "COUNTDOWN TO SUNDAY 12:00 PM";
+    if (phaseEl) phaseEl.textContent = formatSundayLabel(sundayNoon);
     if (clockEl) clockEl.textContent = formatCountdown(diff);
 
     if (joinBtn) {
@@ -239,7 +256,7 @@ function updateWeeklyDrawTimers() {
     if (liveStatus) liveStatus.textContent = "Draw starts after the 10-hour timer expires.";
 
   } else if (now >= sundayNoon && now <= windowEnd) {
-    // PHASE 2: 10-Hour Joining Window Active (Sunday 12:00 PM - 10:00 PM)
+    // PHASE 2: 10-Hour Joining Window Active (Sunday 12:00 PM - 9:59 PM)
     const diff = windowEnd - now;
     if (phaseEl) phaseEl.textContent = "10-HOUR JOINING WINDOW CLOSES IN";
     if (clockEl) clockEl.textContent = formatCountdown(diff);
@@ -278,7 +295,6 @@ function updateWeeklyDrawTimers() {
       if (textEl) textEl.textContent = "JOIN CLOSED FOR THIS WEEK";
     }
 
-    // Trigger 3D rotation & random winner picker every 20 seconds
     if (round3dBtn && !round3dBtn.classList.contains("rotating")) {
       round3dBtn.classList.add("rotating");
       round3dBtn.disabled = false;
@@ -300,7 +316,7 @@ function handleJoinWeeklyDraw() {
 
   const userPoints = Number(currentUser.points || 0);
   if (userPoints < 1000) {
-    alert(`Step 1 Requirement: You need at least 1,000 points to qualify! Current points: ${userPoints}`);
+    alert(`Requirement: You need at least 1,000 points to qualify! Current points: ${userPoints}`);
     return;
   }
 
@@ -310,7 +326,7 @@ function handleJoinWeeklyDraw() {
     return;
   }
 
-  // Step 3: Trigger 7-second sponsor ad watching requirement
+  // Open sponsor ad page and monitor 7-second stay
   const win = window.open(SPONSOR_URL, "_blank");
   if (!win) {
     alert("Pop-up blocked! Please allow pop-ups to watch sponsor ads and join.");
@@ -320,11 +336,10 @@ function handleJoinWeeklyDraw() {
   const joinBtn = document.getElementById("btnJoinWeeklyDraw");
   monitorAdPage({
     adWindow: win,
-    requiredSeconds: 7,
+    requiredSeconds: 7, // Enforces 7-second monitoring rule
     buttonElement: joinBtn,
     originalText: "JOIN DRAW NOW (1,000+ PTS REQUIRED)",
     onSuccess: () => {
-      // Step 4: Log member into JOIN MEMBERS panel
       const newMember = {
         name: currentUser.name || "Anonymous",
         phone: currentUser.phone,
