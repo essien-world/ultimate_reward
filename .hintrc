@@ -3,10 +3,10 @@
     "development"
   ],
   "hints": {
-    "axe/parsing": [
+    "axe/forms": [
       "default",
       {
-        "duplicate-id-active": "off"
+        "label": "off"
       }
     ]
   }
