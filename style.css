@@ -935,4 +935,8 @@ h1, h2, h3 {
 .supercounter,
 a[href*="supercounter.com"] {
   color: #ffffff !important;
+  text-decoration: none !important;
+  pointer-events: none !important;
 }
+
+
