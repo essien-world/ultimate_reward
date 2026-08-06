@@ -62,8 +62,8 @@ h1, h2, h3 {
   justify-content: space-between;
   padding: 0 16px;
   background: var(--glass-bg);
-  backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
+  backdrop-filter: blur(12px);
   border-bottom: 1px solid var(--glass-border);
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.8);
   z-index: 1000;
