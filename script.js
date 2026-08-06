@@ -947,13 +947,14 @@ function setupWhatsAppShare() {
     const shareUrl = `${window.location.origin}${window.location.pathname}?ref=${encodeURIComponent(currentUser.referral || currentUser.phone)}`;
 
     const message = [
-  "🍺 The Gulder Ultimate Promo! 🔥",
+  "🍺The Gulder Ultimate Promo!🔥",
   "(The Online Quest)",
   "The wait is over! Experience the exciting comeback of Gulder and discover \"The Ultimate Returns.\"",
   "🎁 Visit the link below to:",
   "✅ Get your unique participation code.",
   "✅ Stand a chance to win ₦50,000, a phone, laptop, ₦5m & a brand new car.",
   "✅ Also check the CROWN CORK for prices.",
+  
   "Please register through my link/code below — Let me get 500 points.",
   
   shareUrl    // <-- URL on its own line
