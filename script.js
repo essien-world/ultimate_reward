@@ -124,7 +124,7 @@ const REF_WORD = "GULDER";
 document.addEventListener("DOMContentLoaded", () => {
   setupOnlineOfflineHandlers();
   
-  // Restore persisted user (if any) so login survives page reload 
+  
   try { 
     const stored = localStorage.getItem("gulder_current_user"); 
     if (stored) { 
@@ -2211,4 +2211,21 @@ if (typeof window !== "undefined") {
   window.submitComment = submitComment;
   window.setPhoneVerified = setPhoneVerified;
   window.checkReferrerPoints = checkReferrerPoints;
+}
+
+function checkGameLockState() {
+  // Logic for game locking state
+}
+
+function setupMandatoryVerificationButton() {
+  const btn = document.getElementById("mandatoryVerifyBtn");
+  if (btn) {
+    btn.addEventListener("click", () => {
+      // Mandatory verification logic
+    });
+  }
+}
+
+async function refreshMandatoryVerificationButton() {
+  // Logic for refreshing verification status
 }
