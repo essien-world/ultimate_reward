@@ -152,6 +152,7 @@ document.addEventListener("DOMContentLoaded", () => {
   setupLogout();
   setupWhatsAppShare();
   setupRedeem();
+  initWeeklyDrawFlow();
   setupGameHandlers();
   setupBankUI();
   setupOnlineLeaderboard();
@@ -159,6 +160,289 @@ document.addEventListener("DOMContentLoaded", () => {
   setupCommentsModuleIfPresent();
   setupMandatoryVerificationButton(); // NEW: setup the dashboard mandatory verification button
 });
+
+/* ----------------------------------------------------
+   WEEKLY DRAW FLOW IMPLEMENTATION
+   ---------------------------------------------------- */
+let drawState = {
+  joinedMembers: [],
+  winners: [],
+  drawInterval: null,
+  hasDrawnThisWeek: false
+};
+
+function initWeeklyDrawFlow() {
+  loadDrawStorage();
+  updateWeeklyDrawTimers();
+  setInterval(updateWeeklyDrawTimers, 1000);
+
+  const joinBtn = document.getElementById("btnJoinWeeklyDraw");
+  if (joinBtn) {
+    joinBtn.addEventListener("click", handleJoinWeeklyDraw);
+  }
+}
+
+// Target calculation: Sunday 12:00 PM and 10-Hour Post Window
+function getWeeklyDrawTimes() {
+  const now = new Date();
+  let sundayNoon = new Date(now);
+  
+  // Calculate next or current Sunday
+  const dayOfWeek = now.getDay(); // 0 = Sunday
+  const distanceToSunday = (7 - dayOfWeek) % 7;
+  
+  sundayNoon.setDate(now.getDate() + distanceToSunday);
+  sundayNoon.setHours(12, 0, 0, 0);
+
+  // If Sunday 12:00 PM has already passed by more than 10 hours, target next Sunday
+  const tenHoursAfterNoon = new Date(sundayNoon.getTime() + (10 * 60 * 60 * 1000));
+  if (now > tenHoursAfterNoon) {
+    sundayNoon.setDate(sundayNoon.getDate() + 7);
+  }
+
+  const windowEnd = new Date(sundayNoon.getTime() + (10 * 60 * 60 * 1000)); // 10-hr countdown
+  return { now, sundayNoon, windowEnd };
+}
+
+function updateWeeklyDrawTimers() {
+  const { now, sundayNoon, windowEnd } = getWeeklyDrawTimes();
+  const phaseEl = document.getElementById("drawTimerPhase");
+  const clockEl = document.getElementById("drawCountdownClock");
+  const joinBtn = document.getElementById("btnJoinWeeklyDraw");
+  const iconEl = document.getElementById("joinBtnIcon");
+  const textEl = document.getElementById("joinBtnText");
+  const round3dBtn = document.getElementById("btnRound3D");
+  const liveStatus = document.getElementById("drawLiveStatus");
+
+  // Check week reset
+  const currentWeekKey = sundayNoon.toISOString().slice(0, 10);
+  if (localStorage.getItem("gulder_draw_week") !== currentWeekKey) {
+    resetWeeklyDraw(currentWeekKey);
+  }
+
+  if (now < sundayNoon) {
+    // PHASE 1: Pre-Sunday 12:00 PM Countdown
+    const diff = sundayNoon - now;
+    if (phaseEl) phaseEl.textContent = "COUNTDOWN TO SUNDAY 12:00 PM";
+    if (clockEl) clockEl.textContent = formatCountdown(diff);
+
+    if (joinBtn) {
+      joinBtn.disabled = true;
+      joinBtn.classList.add("locked");
+      if (iconEl) iconEl.textContent = "🔒";
+      if (textEl) textEl.textContent = "JOIN DRAW (Opens Sun 12:00 PM)";
+    }
+    if (round3dBtn) {
+      round3dBtn.classList.remove("rotating");
+      round3dBtn.disabled = true;
+    }
+    if (liveStatus) liveStatus.textContent = "Draw starts after the 10-hour timer expires.";
+
+  } else if (now >= sundayNoon && now <= windowEnd) {
+    // PHASE 2: 10-Hour Joining Window Active (Sunday 12:00 PM - 10:00 PM)
+    const diff = windowEnd - now;
+    if (phaseEl) phaseEl.textContent = "10-HOUR JOINING WINDOW CLOSES IN";
+    if (clockEl) clockEl.textContent = formatCountdown(diff);
+
+    const userPoints = currentUser ? Number(currentUser.points || 0) : 0;
+    const hasJoined = currentUser && drawState.joinedMembers.some(m => m.phone === currentUser.phone);
+
+    if (joinBtn) {
+      if (hasJoined) {
+        joinBtn.disabled = true;
+        joinBtn.classList.remove("locked");
+        if (iconEl) iconEl.textContent = "✅";
+        if (textEl) textEl.textContent = "YOU HAVE JOINED THIS WEEK'S DRAW";
+      } else {
+        joinBtn.disabled = false;
+        joinBtn.classList.remove("locked");
+        if (iconEl) iconEl.textContent = "🔓";
+        if (textEl) textEl.textContent = "JOIN DRAW NOW (1,000+ PTS REQUIRED)";
+      }
+    }
+    if (round3dBtn) {
+      round3dBtn.classList.remove("rotating");
+      round3dBtn.disabled = true;
+    }
+    if (liveStatus) liveStatus.textContent = "Joining phase open! Draw begins when 10hr timer expires.";
+
+  } else {
+    // PHASE 3: 10-Hour Window Expired -> Execute Round 3D Draw
+    if (phaseEl) phaseEl.textContent = "WEEKLY DRAW IN PROGRESS";
+    if (clockEl) clockEl.textContent = "00d : 00h : 00m : 00s";
+
+    if (joinBtn) {
+      joinBtn.disabled = true;
+      joinBtn.classList.add("locked");
+      if (iconEl) iconEl.textContent = "🔒";
+      if (textEl) textEl.textContent = "JOIN CLOSED FOR THIS WEEK";
+    }
+
+    // Trigger 3D rotation & random winner picker every 20 seconds
+    if (round3dBtn && !round3dBtn.classList.contains("rotating")) {
+      round3dBtn.classList.add("rotating");
+      round3dBtn.disabled = false;
+    }
+    if (liveStatus) liveStatus.textContent = "🌀 Round 3D active! Selecting 1 winner every 20 seconds...";
+
+    start3dRandomDrawProcess();
+  }
+
+  renderJoinedMembers();
+  renderWinnersList();
+}
+
+function handleJoinWeeklyDraw() {
+  if (!currentUser) {
+    alert("Please log in first to join the draw!");
+    return;
+  }
+
+  const userPoints = Number(currentUser.points || 0);
+  if (userPoints < 1000) {
+    alert(`Step 1 Requirement: You need at least 1,000 points to qualify! Current points: ${userPoints}`);
+    return;
+  }
+
+  const alreadyJoined = drawState.joinedMembers.some(m => m.phone === currentUser.phone);
+  if (alreadyJoined) {
+    alert("You are already logged into the JOIN MEMBERS panel.");
+    return;
+  }
+
+  // Step 3: Trigger 7-second sponsor ad watching requirement
+  const win = window.open(SPONSOR_URL, "_blank");
+  if (!win) {
+    alert("Pop-up blocked! Please allow pop-ups to watch sponsor ads and join.");
+    return;
+  }
+
+  const joinBtn = document.getElementById("btnJoinWeeklyDraw");
+  monitorAdPage({
+    adWindow: win,
+    requiredSeconds: 7,
+    buttonElement: joinBtn,
+    originalText: "JOIN DRAW NOW (1,000+ PTS REQUIRED)",
+    onSuccess: () => {
+      // Step 4: Log member into JOIN MEMBERS panel
+      const newMember = {
+        name: currentUser.name || "Anonymous",
+        phone: currentUser.phone,
+        joinedAt: new Date().toLocaleTimeString()
+      };
+      drawState.joinedMembers.push(newMember);
+      saveDrawStorage();
+      renderJoinedMembers();
+      alert("🎉 Successfully joined the Weekly Draw!");
+      updateWeeklyDrawTimers();
+    }
+  });
+}
+
+// Step 5: Round 3D Draw Process (Picks 1 random user every 20 seconds)
+function start3dRandomDrawProcess() {
+  if (drawState.drawInterval) return; // Already running
+
+  drawState.drawInterval = setInterval(() => {
+    if (drawState.joinedMembers.length === 0) return;
+
+    // Filter out already selected winners
+    const unselected = drawState.joinedMembers.filter(m => !drawState.winners.some(w => w.phone === m.phone));
+    if (unselected.length === 0) {
+      clearInterval(drawState.drawInterval);
+      drawState.drawInterval = null;
+      const liveStatus = document.getElementById("drawLiveStatus");
+      if (liveStatus) liveStatus.textContent = "✅ All eligible members have been drawn!";
+      return;
+    }
+
+    // Pick 1 random user
+    const randomIndex = Math.floor(Math.random() * unselected.length);
+    const winner = unselected[randomIndex];
+    winner.wonAt = new Date().toLocaleTimeString();
+
+    drawState.winners.unshift(winner);
+    saveDrawStorage();
+    renderWinnersList(true);
+  }, 20000); // 20 Seconds
+}
+
+function resetWeeklyDraw(weekKey) {
+  drawState.joinedMembers = [];
+  drawState.winners = [];
+  if (drawState.drawInterval) {
+    clearInterval(drawState.drawInterval);
+    drawState.drawInterval = null;
+  }
+  localStorage.setItem("gulder_draw_week", weekKey);
+  saveDrawStorage();
+}
+
+function renderJoinedMembers() {
+  const listEl = document.getElementById("joinMembersList");
+  const countEl = document.getElementById("joinMembersCount");
+  if (!listEl) return;
+
+  if (countEl) countEl.textContent = `(${drawState.joinedMembers.length} Joined)`;
+
+  if (drawState.joinedMembers.length === 0) {
+    listEl.innerHTML = `<div style="color:#666; text-align:center;">No members have joined yet for this draw.</div>`;
+    return;
+  }
+
+  listEl.innerHTML = drawState.joinedMembers.map(m => `
+    <div style="display:flex; justify-content:space-between; padding:6px 8px; border-bottom:1px solid #222;">
+      <span><strong>${escapeHtml(m.name)}</strong> (${escapeHtml(m.phone)})</span>
+      <span style="color:#888; font-size:0.8rem;">${m.joinedAt}</span>
+    </div>
+  `).join("");
+}
+
+function renderWinnersList(animateFirst = false) {
+  const listEl = document.getElementById("weeklyWinnersList");
+  if (!listEl) return;
+
+  if (drawState.winners.length === 0) {
+    listEl.innerHTML = `<div style="color:#666; text-align:center;">Winners will appear here every 20 seconds during the draw.</div>`;
+    return;
+  }
+
+  listEl.innerHTML = drawState.winners.map((w, idx) => `
+    <div class="${(animateFirst && idx === 0) ? 'winner-row-anim' : ''}" style="display:flex; justify-content:space-between; padding:8px 10px; border-bottom:1px solid #222; border-radius:4px; margin-bottom:4px;">
+      <span>🏆 <strong>${escapeHtml(w.name)}</strong> (${escapeHtml(w.phone)})</span>
+      <span style="color:#25D366; font-size:0.8rem;">Won at ${w.wonAt}</span>
+    </div>
+  `).join("");
+}
+
+function formatCountdown(ms) {
+  if (ms <= 0) return "00d : 00h : 00m : 00s";
+  const sec = Math.floor((ms / 1000) % 60);
+  const min = Math.floor((ms / (1000 * 60)) % 60);
+  const hrs = Math.floor((ms / (1000 * 60 * 60)) % 24);
+  const days = Math.floor(ms / (1000 * 60 * 60 * 24));
+
+  return `${String(days).padStart(2, '0')}d : ${String(hrs).padStart(2, '0')}h : ${String(min).padStart(2, '0')}m : ${String(sec).padStart(2, '0')}s`;
+}
+
+function saveDrawStorage() {
+  localStorage.setItem("gulder_draw_data", JSON.stringify({
+    joinedMembers: drawState.joinedMembers,
+    winners: drawState.winners
+  }));
+}
+
+function loadDrawStorage() {
+  try {
+    const data = JSON.parse(localStorage.getItem("gulder_draw_data") || "null");
+    if (data) {
+      drawState.joinedMembers = data.joinedMembers || [];
+      drawState.winners = data.winners || [];
+    }
+  } catch (e) {
+    console.warn("Failed loading draw storage", e);
+  }
+}
 
 /* --------------------
    ONLINE / OFFLINE
