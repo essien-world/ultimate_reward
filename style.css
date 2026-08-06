@@ -902,3 +902,30 @@ h1, h2, h3 {
   from { opacity: 0; transform: translateY(-8px); }
   to { opacity: 1; transform: translateY(0); }
 }
+
+/* Automatic Rotation for Spin Button */
+.btn-3d-rotate.rotating {
+  animation: spinWheel 2s linear infinite;
+  box-shadow: 0 0 20px rgba(212, 175, 55, 0.8);
+  pointer-events: none; /* Prevents multiple clicks during active spin */
+}
+
+/* 2D Smooth Continuous Spin */
+@keyframes spinWheel {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+/* Alternative: 3D Coin-Flip Spin (Use if you prefer a 3D turn effect) */
+@keyframes spin3D {
+  0% {
+    transform: perspective(400px) rotateY(0deg);
+  }
+  100% {
+    transform: perspective(400px) rotateY(360deg);
+  }
+}
