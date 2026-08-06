@@ -340,7 +340,7 @@ h1, h2, h3 {
   display: flex;
   gap: 30px;
   white-space: nowrap;
-  animation: scroll-left 20s linear infinite;
+  animation: scroll-left 40s linear infinite;
   color: var(--text-white);
   font-size: 0.9rem;
   font-weight: 600;
