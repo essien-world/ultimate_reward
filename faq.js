@@ -35,7 +35,7 @@ const FAQS = [
   {
     question: "What is the minimum point required to qualify for rewards?",
     answer:
-      "You must accumulate at least 10,000 points before you become eligible for rewards and submission of bank details."
+      "You must accumulate at least 1,000 points before you become eligible for rewards and 10,000 points for submission of bank details for mega rewards."
   },
 
   {
