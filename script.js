@@ -17,7 +17,7 @@ import {
   processReferralClaims
 } from "./firebase.js";
 
-const SPONSOR_URL = "https://google.com";
+const SPONSOR_URL = "https://omg10.com/4/11176773";
 
 // Keep OTP endpoints as before or migrate to Firebase Auth phone later
 const OTP_SEND_URL = "https://example.com/send-otp";

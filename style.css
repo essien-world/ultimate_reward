@@ -365,6 +365,7 @@ h1, h2, h3 {
   padding: 20px;
   margin-bottom: 20px;
   box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37), 0 0 15px var(--glass-glow);
+  -webkit-backdrop-filter: blur(8px);
   backdrop-filter: blur(8px);
 }
 
