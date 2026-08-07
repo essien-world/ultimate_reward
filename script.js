@@ -191,7 +191,6 @@ function formatSundayLabel(dateObj) {
   return `COUNTDOWN TO SUNDAY ${day} ${month}, ${year}. 12:00 PM`;
 }
 
-// Calculates target Sunday while skipping August 9, 2026
 function getWeeklyDrawTimes() {
   const now = new Date();
   let sundayNoon = new Date(now);
@@ -207,17 +206,11 @@ function getWeeklyDrawTimes() {
     sundayNoon.setDate(sundayNoon.getDate() + 7);
   }
 
-  // If Sunday 12:00 PM has already passed by more than 10 hours, target next Sunday
-  const tenHoursAfterNoon = new Date(sundayNoon.getTime() + (10 * 60 * 60 * 1000));
-  if (now > tenHoursAfterNoon) {
-    sundayNoon.setDate(sundayNoon.getDate() + 7);
-    // Double check skip if incrementing lands on Aug 9
-    if (sundayNoon.getFullYear() === 2026 && sundayNoon.getMonth() === 7 && sundayNoon.getDate() === 9) {
-      sundayNoon.setDate(sundayNoon.getDate() + 7);
-    }
-  }
-
+  // FIXED: Removed the aggressive 10-hour skip that forced the date to next week immediately
+  // and broke the timer calculation. The `distanceToSunday` calculation naturally targets 
+  // the next week once the day ticks over to Monday.
   const windowEnd = new Date(sundayNoon.getTime() + (10 * 60 * 60 * 1000)); // 10-hour window (12:00 PM to 9:59 PM)
+  
   return { now, sundayNoon, windowEnd };
 }
 
