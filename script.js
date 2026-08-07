@@ -51,6 +51,48 @@ function setCurrentUser(user) {
   } 
 }
 
+// Detect and Request Unblocking Snippet
+function detectAdBlocker() {
+  // Create a bait element with standard ad class/id signatures
+  const bait = document.createElement("div");
+  bait.setAttribute("id", "adsbox");
+  bait.setAttribute("class", "ad-banner adsbygoogle");
+  bait.style.width = "1px";
+  bait.style.height = "1px";
+  bait.style.position = "absolute";
+  bait.style.left = "-10px";
+  bait.style.top = "-10px";
+  document.body.appendChild(bait);
+
+  setTimeout(() => {
+    const notice = document.getElementById("adBlockNotice");
+    if (!notice) return;
+
+    // Check if the bait element is hidden, collapsed, or removed by an extension
+    const isBlocked = bait.offsetHeight === 0 || 
+                      window.getComputedStyle(bait).display === "none" || 
+                      window.getComputedStyle(bait).visibility === "hidden";
+
+    if (isBlocked) {
+      notice.classList.remove("hidden");
+    }
+
+    // Clean up bait element
+    if (bait.parentNode) {
+      bait.parentNode.removeChild(bait);
+    }
+  }, 100);
+
+  // Handle dismiss button
+  const dismissBtn = document.getElementById("dismissAdNotice");
+  if (dismissBtn) {
+    dismissBtn.addEventListener("click", () => {
+      const notice = document.getElementById("adBlockNotice");
+      if (notice) notice.classList.add("hidden");
+    });
+  }
+}
+
 // script.js — robust onAuthStateChanged handler
 onAuthStateChanged(auth, async (fbUser) => {
   try {
@@ -155,6 +197,7 @@ document.addEventListener("DOMContentLoaded", () => {
   initWeeklyDrawFlow();
   setupGameHandlers();
   setupBankUI();
+  detectAdBlocker();
   setupOnlineLeaderboard();
   setupPhoneVerificationUI();
   setupCommentsModuleIfPresent();
