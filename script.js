@@ -2206,19 +2206,3 @@ if (typeof window !== "undefined") {
   window.checkReferrerPoints = checkReferrerPoints;
 }
 
-function checkGameLockState() {
-  // Logic for game locking state
-}
-
-function setupMandatoryVerificationButton() {
-  const btn = document.getElementById("mandatoryVerifyBtn");
-  if (btn) {
-    btn.addEventListener("click", () => {
-      // Mandatory verification logic
-    });
-  }
-}
-
-async function refreshMandatoryVerificationButton() {
-  // Logic for refreshing verification status
-}
