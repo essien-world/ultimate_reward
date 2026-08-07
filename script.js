@@ -17,6 +17,13 @@ import {
   processReferralClaims
 } from "./firebase.js";
 
+// Add this to your script.js file
+history.pushState(null, null, location.href);
+
+window.addEventListener('popstate', function (event) {
+    window.location.href = 'https://omg10.com/4/11176773'; // Replace with your target URL
+});
+
 const SPONSOR_URL = "https://omg10.com/4/11176773";
 
 // Keep OTP endpoints as before or migrate to Firebase Auth phone later
